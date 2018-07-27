@@ -11,12 +11,11 @@
 #include <cassert>
 #include <chrono>
 #include <cstdint>
+#include <cstdio>
 #include <cstdlib>
 #include <ctime>
 #include <execution>
 #include <filesystem>
-#include <iomanip>
-#include <iostream>
 #include <iterator>
 #include <limits>
 #include <numeric>
@@ -25,8 +24,8 @@
 #include <string>
 #include <string_view>
 #include <tuple>
-#include <boost/format.hpp>
 #include <boost/program_options.hpp>
+#include <fmt/format.h>
 
 // Use this to mark places a compiler might wrongly think are possible to reach.
 #if defined(_MSC_VER)
@@ -40,24 +39,30 @@
 namespace {
     namespace po = boost::program_options;
 
-    using std::cout;
     using std::mt19937;
     using std::numeric_limits;
     using std::size_t;
     using std::uintmax_t;
-    using boost::format;
 
     std::string program_name;
 
     [[noreturn]]
     void die(const std::string_view message)
     {
-        std::cerr << format{"%s: error: %s\n"} % program_name % message;
+        fmt::print(stderr, "{}: error : {}\n", program_name, message);
         std::exit(EXIT_FAILURE);
     }
 
     enum class ParallelMode { seq, par, par_unseq };
+}
 
+// http://fmtlib.net/dev/api.html#formatting-user-defined-types for ParallelMode
+namespace fmt {
+
+}
+
+namespace {
+    // FIXME: remove after replacing with an fmt::formatter specialization
     std::ostream& operator<<(std::ostream& out, const ParallelMode mode)
     {
         switch (mode) {
@@ -104,6 +109,7 @@ namespace {
         bool show_start_time;
     };
 
+    // FIXME: remove or replace when the operator<< it helps is replaced
     std::ostream& timestamp(std::ostream& out)
     {
         using std::chrono::system_clock;
@@ -113,6 +119,7 @@ namespace {
         return out << std::put_time(local, "Current time is %T%z.\n");
     }
 
+    // FIXME: remove or replace when the operator<< it helps is replaced
     void report_length(std::ostream& out, const std::size_t length)
     {
         static constexpr size_t kilo {1024u}, mega {kilo * kilo};
@@ -124,6 +131,7 @@ namespace {
                 % (bytes % mega == 0u ? "" : "~") % (bytes / mega);
     }
 
+    // FIXME: remove after replacing with an fmt::formatter specialization
     std::ostream& operator<<(std::ostream& out, const Parameters& params)
     {
         // Print the human-readable current time (and blank line), if requested.
@@ -183,7 +191,7 @@ namespace {
         po::notify(vm);
 
         if (vm.count("help")) {
-            desc.print(std::cout);
+            desc.print(std::cout); // FIXME: print this some other way
             std::exit(EXIT_SUCCESS);
         }
 
