@@ -1,10 +1,21 @@
+// This is a simple memory benchmarking tool that makes an array of pseudorandom
+// numbers and sorts them using an execution policy. The length and policy are
+// specified by the user. The flags --seq, --par, and --par-unseq specify the
+// policy. By default, it is as if --par were passed. These options correspond
+// to https://en.cppreference.com/w/cpp/algorithm/execution_policy_tag_t. Use
+// --help for a description of all options. 64-bit builds are recommended. This
+// is an outgrowth of a program meant to reproduce a vexing system stability
+// problem; it is not really well-suited to use as a general-purpose benchmark.
+
 #include <algorithm>
 #include <cassert>
 #include <chrono>
 #include <cstdint>
 #include <cstdlib>
+#include <ctime>
 #include <execution>
 #include <filesystem>
+#include <iomanip>
 #include <iostream>
 #include <iterator>
 #include <limits>
@@ -89,24 +100,47 @@ namespace {
         unsigned seed;
         std::string_view seed_origin;
         ParallelMode mode;
+        int inplace_reps;
+        bool show_start_time;
     };
 
-    std::ostream& operator<<(std::ostream& out, const Parameters& params)
+    std::ostream& timestamp(std::ostream& out)
+    {
+        using std::chrono::system_clock;
+
+        const auto ticks = system_clock::to_time_t(system_clock::now());
+        const auto local = std::localtime(&ticks);
+        return out << std::put_time(local, "Current time is %T%z.\n");
+    }
+
+    void report_length(std::ostream& out, const std::size_t length)
     {
         static constexpr size_t kilo {1024u}, mega {kilo * kilo};
 
-        // Show the specified length and about how much space it will use.
-        const auto bytes = params.length * sizeof(unsigned);
-        out << format{"      length:  %u word%s (%s%u MiB)\n"} 
-                % params.length % (params.length == 1u ? "" : "s")
+        const auto bytes = length * sizeof(unsigned);
+
+        out << format{"   length:  %u word%s (%s%u MiB)\n"} 
+                % length % (length == 1u ? "" : "s")
                 % (bytes % mega == 0u ? "" : "~") % (bytes / mega);
+    }
+
+    std::ostream& operator<<(std::ostream& out, const Parameters& params)
+    {
+        // Print the human-readable current time (and blank line), if requested.
+        if (params.show_start_time) out << timestamp << '\n';
+
+        // Show the specified length and about how much space it will use.
+        report_length(out, params.length);
 
         // Show the seed the PRNG will use, and say where it came from.
-        out << format{"        seed:  %u  (%s)\n"}
+        out << format{"     seed:  %u  (%s)\n"}
                 % params.seed % params.seed_origin;
 
-        // Show the (short) C++ name and briefly explain the execution policy.
-        return out << format{"sorting mode:  %s\n"} % params.mode;
+        // Name and "explain" the execution policy and if the sort is repeated.
+        out << format{"sort mode:  %s"} % params.mode;
+        if (params.inplace_reps > 1)
+            out << format {"  [repeating %dx]"} % params.inplace_reps;
+        return out << '\n';
     }
 
     [[nodiscard]]
@@ -114,15 +148,17 @@ namespace {
     describe_options()
     {
         po::options_description desc {"Options to configure the benchmark"};
-        desc.add_options()("help,h", "show this message")
+        desc.add_options()
+                ("help,h", "show this message") // TODO: list --help separately
                 ("length,l", po::value<size_t>(),
                              "specify how many elements to generate and sort")
                 ("seed,s", po::value<unsigned>(),
                            "custom seed for PRNG (omit to use system entropy)")
+                ("twice,2", "after sorting, sort again (may test adaptivity)")
+                ("time,t", "display human-readable start time")
                 ("seq,S", "don't try to parallelize")
                 ("par,P", "try to parallelize (default)")
-                ("par-unseq,U", "try to parallelize and "
-                                "permit vectorization and thread migration");
+                ("par-unseq,U", "try to parallelize, may migrate thread and vectorize");
 
         po::positional_options_description pos_desc;
         pos_desc.add("length", 1);
@@ -141,7 +177,7 @@ namespace {
             po::store(po::command_line_parser{argc, argv}
                         .options(desc).positional(pos_desc).run(), vm);
         }
-        catch (const po::error_with_no_option_name& e) {
+        catch (const po::error& e) {
             die(e.what());
         }
         po::notify(vm);
@@ -195,7 +231,7 @@ namespace {
             NOT_REACHED();
 
         default:
-            die("at most one of --seq, --par, --par-unseq may be specified");
+            die("at most one of (--seq, --par, --par-unseq) is accepted");
         }
     }
 
@@ -207,14 +243,16 @@ namespace {
         params.length = extract_length(vm);
         std::tie(params.seed, params.seed_origin) = obtain_seed_info(vm);
         params.mode = extract_dynamic_execution_policy(vm);
+        params.inplace_reps = (vm.count("twice") ? 2 : 1);
+        params.show_start_time = vm.count("time");
 
         return params;
     }
-
+    
     [[nodiscard]]
     Parameters configure(const int argc, char* const* const argv)
     {
-        // Avoids needless buffer-flushing. (Remove if using any C-style IO.)
+        // Avoid needless buffer-flushing. (Remove if using any C-style IO.)
         std::ios_base::sync_with_stdio(false);
 
         // Set the program name for error messages to the Unix-style basename.
@@ -225,6 +263,15 @@ namespace {
         return extract_operating_parameters(parse_cmdline_args(argc, argv));
     }
 
+    // TODO: Extract the number-generating stanza (and accompanying static
+    //       assertion) into its own function, and also implement a trivial
+    //       alternative with std::iota to get more insight into adaptivity.
+    //
+    // TODO: Time each step in the test, as well as the whole thing. Put shared
+    //       timing and reporting logic in a function template called with
+    //       message arguments (std::string or boost::format) and action
+    //       arguments of template parameter type, passing lambdas. Or write an
+    //       RAII timing/reporting class (designed similar to std::lock_guard).
     void test(const Parameters& params, mt19937& gen)
     {
         static_assert(mt19937::min() == numeric_limits<unsigned>::min()
@@ -241,9 +288,11 @@ namespace {
         const auto s1 = std::accumulate(first, last, 0u);
         cout << format{"%x.\n"} % s1;
 
-        cout << "Sorting... " << std::flush;
-        sort(params.mode, first, last);
-        cout << "Done.\n";
+        for (auto i = params.inplace_reps; i > 0; --i) {
+            cout << "Sorting... " << std::flush;
+            sort(params.mode, first, last);
+            cout << "Done.\n";
+        }
 
         cout << "Rehashing... " << std::flush;
         const auto s2 = std::accumulate(first, last, 0u);
