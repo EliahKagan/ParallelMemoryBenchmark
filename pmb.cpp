@@ -1,8 +1,9 @@
 #include <algorithm>
 #include <cassert>
-#include <chrono>
+#include <chrono> // for time measurement, *not* seeding the PRNG,  we get it
 #include <cstdint>
 #include <cstdlib>
+#include <execution>
 #include <filesystem>
 #include <iostream>
 #include <iterator>
@@ -64,12 +65,19 @@ namespace {
         assert(argc > 0);
         program_name = std::filesystem::path{argv[0]}.filename().string();
 
-        if (argc < 2) die("too few arguments");
-        if (argc > 2) die("too many arguments");
+
+		if (argc < 2) die("too few arguments");									// argv[0] is the name, argv[1] is the size 
+		if (argc > 2) die("too many arguments");
+
+      //  if (argc < 3) die("too few arguments");									// argv[0] is the name, argv[1] is the size, argv[2] is the parrallel flag,
+      //  if (argc > 3) die("too many arguments");
 
         return to_size(argv[1]); // e.g., pass 2684354560 for 10 GiB
     }
 
+    // Obtains a random number generator.
+    // TODO: Redesign get_config() so it returns a seed, so that a command-line
+    //       option can be added for a user-given seed to reproduce a run.
     mt19937 get_generator()
     {
         std::random_device rd;
@@ -95,7 +103,7 @@ namespace {
         cout << format{"%x.\n"} % s1;
 
         cout << "Sorting... " << std::flush;
-        std::sort(first, last);
+        std::sort(std::execution::par_unseq, first, last);
         cout << "Done.\n";
 
         cout << "Rehashing... " << std::flush;
@@ -110,8 +118,8 @@ namespace {
 
 int main(int argc, char** argv)
 {
-    std::ios_base::sync_with_stdio(false);
-    const auto size = get_config(argc, argv);
+    std::ios_base::sync_with_stdio(false); //Performance optimization
+    const auto size = get_config(argc, argv); 
     auto gen = get_generator();
 
     using namespace std::chrono;
@@ -131,4 +139,6 @@ int main(int argc, char** argv)
     cout << format{"\nTest completed in about %d s (%d ms).\n"}
                 % duration_cast<seconds>(dt).count()
                 % duration_cast<milliseconds>(dt).count();
+
+
 }
