@@ -80,6 +80,10 @@ namespace fmt {
 }
 
 namespace {
+    // TODO: Consider making a template that itself binds a function template as
+    //       a template parameter, for run-time selction of execution policy for
+    //       any algorithm that supports it. The algorithm would still be
+    //       selected at compile-time, but the execution policy at run-time.
     template<typename RandomIt>
     void
     sort(const ParallelMode mode, const RandomIt first, const RandomIt last)
