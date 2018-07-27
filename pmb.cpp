@@ -3,6 +3,7 @@
 #include <chrono>
 #include <cstdint>
 #include <cstdlib>
+#include <filesystem>
 #include <iostream>
 #include <iterator>
 #include <limits>
@@ -10,17 +11,20 @@
 #include <random>
 #include <stdexcept>
 #include <string>
+#include <boost/format.hpp>
 
 namespace {
     using std::cout;
     using std::mt19937;
     using std::numeric_limits;
+    using std::uintmax_t;
+    using boost::format;
 
-    const char* program_name;
+    std::string program_name;
 
     [[noreturn]] void die(const char* const message)
     {
-        std::cerr << program_name << ": error: " << message << '\n';
+        std::cerr << format{"%s: error: %s\n"} % program_name % message;
         std::exit(EXIT_FAILURE);
     }
 
@@ -38,11 +42,11 @@ namespace {
             if (size < 0) die("size argument is negative");
             if (size >= numeric_limits<long long>::max() / word)
                 die("size argument is too big");
-            
-            cout << size << " word" << (size == 1LL ? "" : "s") << " (";
+
             const auto bytes = size * word;
-            if (bytes % mega != 0LL) cout << '~';
-            cout << bytes / mega << " MiB)\n";
+            cout << format{"%d word%s (%s%d MiB)\n"}
+                        % size % (size == 1LL ? "" : "s")
+                        % (bytes % mega == 0LL ? "" : "~") % (bytes / mega);
             
             return static_cast<size_t>(size);
         }
@@ -58,7 +62,7 @@ namespace {
     size_t get_config(const int argc, char* const* const argv)
     {
         assert(argc > 0);
-        program_name = argv[0];
+        program_name = std::filesystem::path{argv[0]}.filename().string();
 
         if (argc < 2) die("too few arguments");
         if (argc > 2) die("too many arguments");
@@ -87,41 +91,44 @@ namespace {
         cout << "Done.\n";
 
         cout << "Hashing... " << std::flush;
-        const auto sum1 = std::accumulate(first, last, 0u);
-        cout << sum1 << ".\n";
+        const auto s1 = std::accumulate(first, last, 0u);
+        cout << format{"%x.\n"} % s1;
 
         cout << "Sorting... " << std::flush;
         std::sort(first, last);
         cout << "Done.\n";
 
         cout << "Rehashing... " << std::flush;
-        const auto sum2 = std::accumulate(first, last, 0u);
-        const auto comment = (sum1 == sum2 ? "same" : "DIFFERENT!");
-        cout << sum2 << ". (" << comment << ")\n";
+        const auto s2 = std::accumulate(first, last, 0u);
+        cout << format{"%x. (%s)\n"} % s2 % (s1 == s2 ? "same" : "DIFFERENT!");
 
         cout << "Checking... " << std::flush;
-        cout << (std::is_sorted(first, last) ? "sorted." : "NOT SORTED!")
-             << '\n';
+        cout << format{"%s\n"} % (std::is_sorted(first, last) ? "sorted."
+                                                              : "NOT SORTED!");
     }
 }
 
 int main(int argc, char** argv)
 {
     std::ios_base::sync_with_stdio(false);
-    
     const auto size = get_config(argc, argv);
     auto gen = get_generator();
 
-    const auto ti = std::chrono::steady_clock::now();
+    using namespace std::chrono;
+    const auto ti = steady_clock::now();
 
     try {
         test(size, gen);
     }
     catch (const std::bad_alloc&) {
+        cout << '\n'; // end the "Generating" line
         die("out of memory");
     }
 
-    const auto tf = std::chrono::steady_clock::now();
-    const auto dt = std::chrono::duration_cast<std::chrono::seconds>(tf - ti);
-    cout << "\nTest completed in " << dt.count() << " s.\n";
+    const auto tf = steady_clock::now();
+    const auto dt = tf - ti;
+
+    cout << format{"\nTest completed in about %d s (%d ms).\n"}
+                % duration_cast<seconds>(dt).count()
+                % duration_cast<milliseconds>(dt).count();
 }
