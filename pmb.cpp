@@ -8,6 +8,7 @@
 // problem; it is not really well-suited to use as a general-purpose benchmark.
 
 #include <algorithm>
+#include <array>
 #include <cassert>
 #include <chrono>
 #include <cstdint>
@@ -37,8 +38,8 @@
 #endif
 
 namespace {
+    using namespace std::string_view_literals;
     namespace po = boost::program_options;
-
     using std::mt19937;
     using std::numeric_limits;
     using std::size_t;
@@ -54,31 +55,31 @@ namespace {
     }
 
     enum class ParallelMode { seq, par, par_unseq };
+
+    std::array parallel_mode_summaries { // TODO: make const or constxpr
+        "std::seq (do not parallelize)"sv,
+        "std::par (parallelize)"sv,
+        "std::par_unseq (parallelize/vectorize/migrate)"sv
+    };
 }
 
 // http://fmtlib.net/dev/api.html#formatting-user-defined-types for ParallelMode
 namespace fmt {
+    template<>
+    struct formatter<ParallelMode> {
+        template<typename ParseContext>
+        constexpr auto parse(ParseContext& ctx) { return std::begin(ctx); }
 
+        template<typename FormatContext>
+        auto format(const ParallelMode mode, FormatContext& ctx)
+        {
+            const auto s = parallel_mode_summaries[static_cast<size_t>(mode)]);
+            return format_to(std::begin(ctx), "{}", s);
+        }
+    };
 }
 
 namespace {
-    // FIXME: remove after replacing with an fmt::formatter specialization
-    std::ostream& operator<<(std::ostream& out, const ParallelMode mode)
-    {
-        switch (mode) {
-        case ParallelMode::seq:
-            return out << "std::seq (do not parallelize)";
-
-        case ParallelMode::par:
-            return out << "std::par (parallelize)";
-
-        case ParallelMode::par_unseq:
-            return out << "std::par_unseq (parallelize/vectorize/migrate)";
-        }
-
-        NOT_REACHED();
-    }
-
     template<typename RandomIt>
     void
     sort(const ParallelMode mode, const RandomIt first, const RandomIt last)
