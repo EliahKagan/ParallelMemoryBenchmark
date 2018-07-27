@@ -1,6 +1,6 @@
 #include <algorithm>
 #include <cassert>
-#include <chrono> // for time measurement, *not* seeding the PRNG,  we get it
+#include <chrono>
 #include <cstdint>
 #include <cstdlib>
 #include <execution>
@@ -12,88 +12,227 @@
 #include <random>
 #include <stdexcept>
 #include <string>
+#include <string_view>
+#include <tuple>
 #include <boost/format.hpp>
+#include <boost/program_options.hpp>
+
+// Use this to mark places a compiler might wrongly think are possible to reach.
+#if defined(_MSC_VER)
+#define NOT_REACHED() __assume(false)
+#elif defined(__GNUC__)
+#define NOT_REACHED() __builtin_unreachable()
+#else
+#define NOT_REACHED() assert(false)
+#endif
 
 namespace {
+    namespace po = boost::program_options;
+
     using std::cout;
     using std::mt19937;
     using std::numeric_limits;
+    using std::size_t;
     using std::uintmax_t;
     using boost::format;
 
     std::string program_name;
 
-    [[noreturn]] void die(const char* const message)
+    [[noreturn]]
+    void die(const std::string_view message)
     {
         std::cerr << format{"%s: error: %s\n"} % program_name % message;
         std::exit(EXIT_FAILURE);
     }
 
-    size_t to_size(const std::string str) // helper for get_config()
+    enum class ParallelMode { seq, par, par_unseq };
+
+    std::ostream& operator<<(std::ostream& out, const ParallelMode mode)
     {
-        static_assert(static_cast<uintmax_t>(numeric_limits<long long>::max())
-                       <= static_cast<uintmax_t>(numeric_limits<size_t>::max()),
-                "word size too small (32-bit build?)");
+        switch (mode) {
+        case ParallelMode::seq:
+            return out << "std::seq (do not parallelize)";
 
-        static constexpr auto kilo = 1024LL, mega = kilo * kilo;
-        static constexpr auto word = static_cast<long long>(sizeof(unsigned));
+        case ParallelMode::par:
+            return out << "std::par (parallelize)";
 
+        case ParallelMode::par_unseq:
+            return out << "std::par_unseq (parallelize/vectorize/migrate)";
+        }
+
+        NOT_REACHED();
+    }
+
+    template<typename RandomIt>
+    void
+    sort(const ParallelMode mode, const RandomIt first, const RandomIt last)
+    {
+        switch (mode) {
+        case ParallelMode::seq:
+            std::sort(std::execution::seq, first, last);
+            return;
+
+        case ParallelMode::par:
+            std::sort(std::execution::par, first, last);
+            return;
+
+        case ParallelMode::par_unseq:
+            std::sort(std::execution::par_unseq, first, last);
+            return;
+        }
+
+        NOT_REACHED();
+    }
+
+    struct Parameters {
+        size_t length;
+        unsigned seed;
+        std::string_view seed_origin;
+        ParallelMode mode;
+    };
+
+    std::ostream& operator<<(std::ostream& out, const Parameters& params)
+    {
+        static constexpr size_t kilo {1024u}, mega {kilo * kilo};
+
+        // Show the specified length and about how much space it will use.
+        const auto bytes = params.length * sizeof(unsigned);
+        out << format{"      length:  %u word%s (%s%u MiB)\n"} 
+                % params.length % (params.length == 1u ? "" : "s")
+                % (bytes % mega == 0u ? "" : "~") % (bytes / mega);
+
+        // Show the seed the PRNG will use, and say where it came from.
+        out << format{"        seed:  %u  (%s)\n"}
+                % params.seed % params.seed_origin;
+
+        // Show the (short) C++ name and briefly explain the execution policy.
+        return out << format{"sorting mode:  %s\n"} % params.mode;
+    }
+
+    [[nodiscard]]
+    std::tuple<po::options_description, po::positional_options_description>
+    describe_options()
+    {
+        po::options_description desc {"Options to configure the benchmark"};
+        desc.add_options()("help,h", "show this message")
+                ("length,l", po::value<size_t>(),
+                             "specify how many elements to generate and sort")
+                ("seed,s", po::value<unsigned>(),
+                           "custom seed for PRNG (omit to use system entropy)")
+                ("seq,S", "don't try to parallelize")
+                ("par,P", "try to parallelize (default)")
+                ("par-unseq,U", "try to parallelize and "
+                                "permit vectorization and thread migration");
+
+        po::positional_options_description pos_desc;
+        pos_desc.add("length", 1);
+
+        return {desc, pos_desc};
+    }
+
+    [[nodiscard]]
+    po::variables_map
+    parse_cmdline_args(const int argc, char* const* const argv)
+    {
+        const auto [desc, pos_desc] = describe_options();
+
+        po::variables_map vm;
         try {
-            const auto size = std::stoll(str);
-            if (size < 0) die("size argument is negative");
-            if (size >= numeric_limits<long long>::max() / word)
-                die("size argument is too big");
+            po::store(po::command_line_parser{argc, argv}
+                        .options(desc).positional(pos_desc).run(), vm);
+        }
+        catch (const po::error_with_no_option_name& e) {
+            die(e.what());
+        }
+        po::notify(vm);
 
-            const auto bytes = size * word;
-            cout << format{"%d word%s (%s%d MiB)\n"}
-                        % size % (size == 1LL ? "" : "s")
-                        % (bytes % mega == 0LL ? "" : "~") % (bytes / mega);
-            
-            return static_cast<size_t>(size);
+        if (vm.count("help")) {
+            desc.print(std::cout);
+            std::exit(EXIT_SUCCESS);
         }
-        catch (const std::invalid_argument&) {
-            die("size argument is non-numeric");
-        }
-        catch (const std::out_of_range&) {
-            die("size argument is way too big");
+
+        return vm;
+    }
+
+    [[nodiscard]]
+    size_t extract_length(const po::variables_map& vm)
+    {
+        if (!vm.count("length")) die("no length specified");
+
+        const auto length = vm.at("length").as<size_t>();
+        if (length >= numeric_limits<size_t>::max() / sizeof(unsigned))
+            die("length is representable but too big to meaningfully try");
+
+        return length;
+    }
+
+    [[nodiscard]]
+    std::tuple<unsigned, std::string_view>
+    obtain_seed_info(const po::variables_map& vm)
+    {
+        if (vm.count("seed"))
+            return {vm.at("seed").as<unsigned>(), "provided by the user"};
+
+        std::random_device rd;
+        return {rd(), "generated by the system"};
+    }
+
+    [[nodiscard]]
+    ParallelMode extract_dynamic_execution_policy(const po::variables_map& vm)
+    {
+        const auto got_seq = vm.count("seq");
+        const auto got_par = vm.count("par");
+        const auto got_par_unseq = vm.count("par-unseq");
+
+        switch (got_seq + got_par + got_par_unseq) {
+        case 0u:
+            return ParallelMode::par;
+
+        case 1u:
+            if (got_seq) return ParallelMode::seq;
+            if (got_par) return ParallelMode::par;
+            if (got_par_unseq) return ParallelMode::par_unseq;
+            NOT_REACHED();
+
+        default:
+            die("at most one of --seq, --par, --par-unseq may be specified");
         }
     }
 
-    // Reads command-line arguments. Returns the user-specified vector size.
-    size_t get_config(const int argc, char* const* const argv)
+    [[nodiscard]]
+    Parameters extract_operating_parameters(const po::variables_map& vm)
     {
+        Parameters params {};
+
+        params.length = extract_length(vm);
+        std::tie(params.seed, params.seed_origin) = obtain_seed_info(vm);
+        params.mode = extract_dynamic_execution_policy(vm);
+
+        return params;
+    }
+
+    [[nodiscard]]
+    Parameters configure(const int argc, char* const* const argv)
+    {
+        // Avoids needless buffer-flushing. (Remove if using any C-style IO.)
+        std::ios_base::sync_with_stdio(false);
+
+        // Set the program name for error messages to the Unix-style basename.
         assert(argc > 0);
         program_name = std::filesystem::path{argv[0]}.filename().string();
 
-
-		if (argc < 2) die("too few arguments");									// argv[0] is the name, argv[1] is the size 
-		if (argc > 2) die("too many arguments");
-
-      //  if (argc < 3) die("too few arguments");									// argv[0] is the name, argv[1] is the size, argv[2] is the parrallel flag,
-      //  if (argc > 3) die("too many arguments");
-
-        return to_size(argv[1]); // e.g., pass 2684354560 for 10 GiB
+        // Fetch operating parameters from command-line arguments and defaults.
+        return extract_operating_parameters(parse_cmdline_args(argc, argv));
     }
 
-    // Obtains a random number generator.
-    // TODO: Redesign get_config() so it returns a seed, so that a command-line
-    //       option can be added for a user-given seed to reproduce a run.
-    mt19937 get_generator()
-    {
-        std::random_device rd;
-        const auto seed = rd();
-        cout << "seed: " << seed << '\n';
-        return mt19937{seed};
-    }
-
-    void test(const size_t size, mt19937& gen)
+    void test(const Parameters& params, mt19937& gen)
     {
         static_assert(mt19937::min() == numeric_limits<unsigned>::min()
                         && mt19937::max() == numeric_limits<unsigned>::max(),
                 "the PRNG does not have the same range as the output type");
 
-        cout << "\nGenerating... " << std::flush;
-        std::vector<unsigned> a (size);
+        cout << "Generating... " << std::flush;
+        std::vector<unsigned> a (params.length);
         const auto first = std::begin(a), last = std::end(a);
         std::generate(first, last, gen);
         cout << "Done.\n";
@@ -103,7 +242,7 @@ namespace {
         cout << format{"%x.\n"} % s1;
 
         cout << "Sorting... " << std::flush;
-        std::sort(std::execution::par_unseq, first, last);
+        sort(params.mode, first, last);
         cout << "Done.\n";
 
         cout << "Rehashing... " << std::flush;
@@ -118,19 +257,19 @@ namespace {
 
 int main(int argc, char** argv)
 {
-    std::ios_base::sync_with_stdio(false); //Performance optimization
-    const auto size = get_config(argc, argv); 
-    auto gen = get_generator();
+    const auto params = configure(argc, argv);
+    std::cout << params << '\n'; // this extra newline is intended
+    mt19937 gen {params.seed};
 
     using namespace std::chrono;
     const auto ti = steady_clock::now();
 
     try {
-        test(size, gen);
+        test(params, gen);
     }
     catch (const std::bad_alloc&) {
-        cout << '\n'; // end the "Generating" line
-        die("out of memory");
+        cout << '\n'; // end the "Generating..." line
+        die("not enough memory");
     }
 
     const auto tf = steady_clock::now();
@@ -139,6 +278,4 @@ int main(int argc, char** argv)
     cout << format{"\nTest completed in about %d s (%d ms).\n"}
                 % duration_cast<seconds>(dt).count()
                 % duration_cast<milliseconds>(dt).count();
-
-
 }
