@@ -122,14 +122,15 @@ namespace {
 
         // Convert it to a string, then use that string (see below for why).
         const auto repr = fmt::format("{:%T%z}", fmt::localtime(ticks));
-        return fmt::format_to(out, "{}", repr);
+        return fmt::format_to(out, "Current time is {}.\n", repr);
 
-        // The code shown below crashes or behaves erratically. It appears
-        // to (try to) write past the end of a buffer. Perhaps someone will
-        // point out my mistake or a bug in fmtlib. For now, I am working
-        // around it with the ugly hack that appears above.
+        // The code shown below crashes or behaves erratically. It appears to
+        // (try to) write past the end of a buffer. Perhaps someone will point
+        // out my mistake or a bug in fmtlib. For now, I am working around it
+        // with the ugly hack that appears above.
         //
-        // return format_to(out, "{:%T%z}", fmt::localtime(ticks));
+        // return fmt::format_to(out, "Current time is {:%T%z}.\n",
+        //                       fmt::localtime(ticks));
     }
 
     template<typename OutputIt>
