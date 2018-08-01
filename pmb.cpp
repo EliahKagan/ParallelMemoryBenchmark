@@ -87,7 +87,7 @@ namespace {
     //       selected at compile-time, but the execution policy at run-time.
     template<typename RandomIt>
     void
-        sort(const ParallelMode mode, const RandomIt first, const RandomIt last)
+    sort(const ParallelMode mode, const RandomIt first, const RandomIt last)
     {
         switch (mode) {
         case ParallelMode::seq:
