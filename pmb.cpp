@@ -27,6 +27,7 @@
 #include <boost/program_options.hpp>
 #include <fmt/format.h>
 #include <fmt/ostream.h> // to print boost::format_options::options_description
+#include <fmt/time.h>
 
 // Use this to mark places a compiler might wrongly think are possible to reach.
 #if defined(_MSC_VER)
@@ -73,7 +74,7 @@ namespace fmt {
         template<typename FormatContext>
         auto format(const ParallelMode mode, FormatContext& ctx)
         {
-            const auto s = parallel_mode_summaries[static_cast<size_t>(mode)]);
+            const auto s = parallel_mode_summaries[static_cast<size_t>(mode)];
             return format_to(std::begin(ctx), "{}", s);
         }
     };
@@ -146,7 +147,7 @@ namespace {
 
         return fmt::format_to(out, "   length:  {} word{} ({}{} MiB)\n",
                               length, (length == 1u ? "" : "s"),
-                              (bytes % meta == 0u ? "" : "~"), bytes / mega);
+                              (bytes % mega == 0u ? "" : "~"), bytes / mega);
     }
 }
 
@@ -174,10 +175,8 @@ namespace fmt {
 
             // Name and "explain" the execution policy and if we rerun the sort.
             out = format_to(out, "sort mode:  {}", params.mode);
-            if (params.inplace_reps > 1) {
-                out = out.format_to(out, "  [repeating {}x]",
-                                    params.inplace_reps);
-            }
+            if (params.inplace_reps > 1) 
+                out = format_to(out, "  [repeating {}x]", params.inplace_reps);
 
             return format_to(out, "\n");
         }
