@@ -85,7 +85,7 @@ namespace {
     //       selected at compile-time, but the execution policy at run-time.
     template<typename RandomIt>
     void
-    sort(const ParallelMode mode, const RandomIt first, const RandomIt last)
+        sort(const ParallelMode mode, const RandomIt first, const RandomIt last)
     {
         switch (mode) {
         case ParallelMode::seq:
@@ -113,28 +113,52 @@ namespace {
         bool show_start_time;
     };
 
-    // FIXME: remove or replace when the operator<< it helps is replaced
-    std::ostream& timestamp(std::ostream& out)
+    template<typename OutputIt>
+    OutputIt format_localnow_to(const OutputIt out)
     {
+        // Obtain the current time.
         using std::chrono::system_clock;
-
         const auto ticks = system_clock::to_time_t(system_clock::now());
-        const auto local = std::localtime(&ticks);
-        return out << std::put_time(local, "Current time is %T%z.\n");
+
+        // Convert it to a string, then use that string (see below for why).
+        const auto repr = fmt::format("{:%T%z}", fmt::localtime(ticks));
+        return fmt::format_to(out, "{}", repr);
+
+        // The code shown below crashes or behaves erratically. It appears
+        // to (try to) write past the end of a buffer. Perhaps someone will
+        // point out my mistake or a bug in fmtlib. For now, I am working
+        // around it with the ugly hack that appears above.
+        //
+        // return format_to(out, "{:%T%z}", fmt::localtime(ticks));
     }
 
-    // FIXME: remove or replace when the operator<< it helps is replaced
-    void report_length(std::ostream& out, const std::size_t length)
+    template<typename OutputIt>
+    OutputIt format_length_to(const OutputIt out, const std::size_t length)
     {
         static constexpr size_t kilo {1024u}, mega {kilo * kilo};
 
         const auto bytes = length * sizeof(unsigned);
 
-        out << format{"   length:  %u word%s (%s%u MiB)\n"} 
-                % length % (length == 1u ? "" : "s")
-                % (bytes % mega == 0u ? "" : "~") % (bytes / mega);
+        return fmt::format_to(out, "   length:  {} word{} ({}{} MiB)\n",
+                              length, (length == 1u ? "" : "s"),
+                              (bytes % meta == 0u ? "" : "~"), bytes / mega);
     }
+}
 
+// http://fmtlib.net/dev/api.html#formatting-user-defined-types for Parameters
+namespace fmt {
+    template<typename ParseContext>
+    constexpr auto parse(ParseContext& ctx) { return std::cbegin(ctx); }
+
+    template<typename FormatContext>
+    auto format(const Parameters& params, FormatContext& ctx)
+    {
+        auto out = std::begin(ctx);
+
+    }
+}
+
+namespace {
     // FIXME: remove after replacing with an fmt::formatter specialization
     std::ostream& operator<<(std::ostream& out, const Parameters& params)
     {
