@@ -113,6 +113,8 @@ namespace {
         bool show_start_time;
     };
 
+
+    // Helper for fmt::formatter<Parameters>::format. Prints timestamp.
     template<typename OutputIt>
     OutputIt format_localnow_to(const OutputIt out)
     {
@@ -133,6 +135,7 @@ namespace {
         //                       fmt::localtime(ticks));
     }
 
+    // Helper for fmt::formatter<Parameters>::format. Prints elem count.
     template<typename OutputIt>
     OutputIt format_length_to(const OutputIt out, const std::size_t length)
     {
@@ -148,38 +151,39 @@ namespace {
 
 // http://fmtlib.net/dev/api.html#formatting-user-defined-types for Parameters
 namespace fmt {
-    template<typename ParseContext>
-    constexpr auto parse(ParseContext& ctx) { return std::cbegin(ctx); }
+    template<>
+    struct formatter<Parameters> {
+        template<typename ParseContext>
+        constexpr auto parse(ParseContext& ctx) { return std::cbegin(ctx); }
 
-    template<typename FormatContext>
-    auto format(const Parameters& params, FormatContext& ctx)
-    {
-        auto out = std::begin(ctx);
+        template<typename FormatContext>
+        auto format(const Parameters& params, FormatContext& ctx)
+        {
+            auto out = std::begin(ctx);
 
-    }
+            // Print human-readable current time (and blank line), if requested.
+            out = format_localnow_to(out);
+
+            // Show the specified length and about how much space it will use.
+            out = format_length_to(out, params.length);
+
+            // Show the seed the PRNG will use, and say where it came from.
+            out = format_to(out, "     seed:  {}  ({})\n",
+                            params.seed, params.seed_origin);
+
+            // Name and "explain" the execution policy and if we rerun the sort.
+            out = format_to(out, "sort mode:  {}", params.mode);
+            if (params.inplace_reps > 1) {
+                out = out.format_to(out, "  [repeating {}x]",
+                                    params.inplace_reps);
+            }
+
+            return format_to(out, "\n");
+        }
+    };
 }
 
 namespace {
-    // FIXME: remove after replacing with an fmt::formatter specialization
-    std::ostream& operator<<(std::ostream& out, const Parameters& params)
-    {
-        // Print the human-readable current time (and blank line), if requested.
-        if (params.show_start_time) out << timestamp << '\n';
-
-        // Show the specified length and about how much space it will use.
-        report_length(out, params.length);
-
-        // Show the seed the PRNG will use, and say where it came from.
-        out << format{"     seed:  %u  (%s)\n"}
-                % params.seed % params.seed_origin;
-
-        // Name and "explain" the execution policy and if the sort is repeated.
-        out << format{"sort mode:  %s"} % params.mode;
-        if (params.inplace_reps > 1)
-            out << format {"  [repeating %dx]"} % params.inplace_reps;
-        return out << '\n';
-    }
-
     [[nodiscard]]
     std::tuple<po::options_description, po::positional_options_description>
     describe_options()
