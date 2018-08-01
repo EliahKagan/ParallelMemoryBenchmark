@@ -57,7 +57,7 @@ namespace {
 
     enum class ParallelMode { seq, par, par_unseq };
 
-    std::array parallel_mode_summaries { // TODO: make const or constxpr
+    constexpr std::array parallel_mode_summaries {
         "std::seq (do not parallelize)"sv,
         "std::par (parallelize)"sv,
         "std::par_unseq (parallelize/vectorize/migrate)"sv
