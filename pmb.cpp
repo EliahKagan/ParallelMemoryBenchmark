@@ -164,7 +164,7 @@ namespace fmt {
             auto out = std::begin(ctx);
 
             // Print human-readable current time (and blank line), if requested.
-            out = format_localnow_to(out);
+            if (params.show_start_time) out = format_localnow_to(out);
 
             // Show the specified length and about how much space it will use.
             out = format_length_to(out, params.length);
