@@ -293,15 +293,23 @@ namespace {
     [[nodiscard]]
     Parameters configure(const int argc, char* const* const argv)
     {
-        // Avoid needless buffer-flushing. (Remove if using any C-style IO.)
-        std::ios_base::sync_with_stdio(false);
-
         // Set the program name for error messages to the Unix-style basename.
         assert(argc > 0);
         program_name = std::filesystem::path{argv[0]}.filename().string();
 
         // Fetch operating parameters from command-line arguments and defaults.
         return extract_operating_parameters(parse_cmdline_args(argc, argv));
+    }
+
+    void heading(const std::string_view label)
+    {
+        fmt::print("{}... ", label);
+        std::fflush(stdout);
+    }
+
+    void done()
+    {
+        fmt::print("Done.\n");
     }
 
     // TODO: Extract the number-generating stanza (and accompanying static
@@ -319,36 +327,36 @@ namespace {
                         && mt19937::max() == numeric_limits<unsigned>::max(),
                 "the PRNG does not have the same range as the output type");
 
-        cout << "Generating... " << std::flush;
+        heading("Generating");
         std::vector<unsigned> a (params.length);
         const auto first = std::begin(a), last = std::end(a);
         std::generate(first, last, gen);
-        cout << "Done.\n";
+        done();
 
-        cout << "Hashing... " << std::flush;
+        heading("Hashing");
         const auto s1 = std::accumulate(first, last, 0u);
-        cout << format{"%x.\n"} % s1;
+        fmt::print("{:x}.\n", s1);
 
         for (auto i = params.inplace_reps; i > 0; --i) {
-            cout << "Sorting... " << std::flush;
+            heading("Sorting");
             sort(params.mode, first, last);
-            cout << "Done.\n";
+            done();
         }
 
-        cout << "Rehashing... " << std::flush;
+        heading("Rehashing");
         const auto s2 = std::accumulate(first, last, 0u);
-        cout << format{"%x. (%s)\n"} % s2 % (s1 == s2 ? "same" : "DIFFERENT!");
+        fmt::print("{:x}. ({})\n", s2, (s1 == s2 ? "same" : "DIFFERENT!"));
 
-        cout << "Checking... " << std::flush;
-        cout << format{"%s\n"} % (std::is_sorted(first, last) ? "sorted."
-                                                              : "NOT SORTED!");
+        heading("Checking");
+        fmt::print("{}\n",
+                   (std::is_sorted(first, last) ? "sorted." : "NOT SORTED!"));
     }
 }
 
 int main(int argc, char** argv)
 {
     const auto params = configure(argc, argv);
-    std::cout << params << '\n'; // this extra newline is intended
+    fmt::print("{}\n", params); // this extra newline is intended
     mt19937 gen {params.seed};
 
     using namespace std::chrono;
@@ -358,14 +366,15 @@ int main(int argc, char** argv)
         test(params, gen);
     }
     catch (const std::bad_alloc&) {
-        cout << '\n'; // end the "Generating..." line
+        fmt::print("\n"); // end the "Generating..." line
         die("not enough memory");
     }
 
     const auto tf = steady_clock::now();
     const auto dt = tf - ti;
 
-    cout << format{"\nTest completed in about %d s (%d ms).\n"}
-                % duration_cast<seconds>(dt).count()
-                % duration_cast<milliseconds>(dt).count();
+    // TODO: instead of duration_cast, divide by units (1s and 1ms) instead.
+    fmt::print("\nTest completed in about {} s ({} ms).\n",
+               duration_cast<seconds>(dt).count(),
+               duration_cast<milliseconds>(dt).count());
 }
