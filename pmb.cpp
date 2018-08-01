@@ -26,6 +26,7 @@
 #include <tuple>
 #include <boost/program_options.hpp>
 #include <fmt/format.h>
+#include <fmt/ostream.h> // to print boost::format_options::options_description
 
 // Use this to mark places a compiler might wrongly think are possible to reach.
 #if defined(_MSC_VER)
@@ -224,7 +225,7 @@ namespace {
         po::notify(vm);
 
         if (vm.count("help")) {
-            desc.print(std::cout); // FIXME: print this some other way
+            fmt::print("{}", desc);
             std::exit(EXIT_SUCCESS);
         }
 
