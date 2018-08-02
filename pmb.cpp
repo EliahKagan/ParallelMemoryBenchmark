@@ -304,16 +304,16 @@ namespace {
 
     // Reporters for the bench() function templates.
     namespace report {
-        const auto time_only = [](const auto dt) {
+        constexpr auto time_only = [](const auto dt) {
             fmt::print(" ({} ms)\n", dt / 1ms);
         };
 
-        const auto compact = [](const auto dt) {
+        constexpr auto compact = [](const auto dt) {
             fmt::print("Done.");
             time_only(dt);
         };
 
-        const auto full = [](const auto dt) {
+        constexpr auto full = [](const auto dt) {
             fmt::print("\nTest completed in about {:.1f} seconds ({} ms).\n",
                        dt / 1.0s, dt / 1ms);
         };
