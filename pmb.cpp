@@ -330,6 +330,7 @@ namespace {
         const auto ti = clock::now();
         std::forward<Action>(action)();
         const auto tf = clock::now();
+
         std::forward<Reporter>(reporter)(tf - ti);
     }
 
