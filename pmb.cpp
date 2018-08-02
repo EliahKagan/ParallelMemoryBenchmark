@@ -328,6 +328,15 @@ namespace {
         reporter(tf - ti);
     }
 
+    template<typename Reporter, typename Action>
+    void bench(const std::string_view label,
+               Reporter&& reporter, Action&& action)
+    {
+        fmt::print("{}... ", label);
+        std::fflush(stdout);
+        bench(std::forward<Reporter>(reporter), std::forward<Action>(action));
+    }
+
     // FIXME: remove when the new timing and reporting logic is in place
     inline void heading(const std::string_view label)
     {
