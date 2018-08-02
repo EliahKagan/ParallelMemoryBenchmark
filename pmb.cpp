@@ -314,7 +314,7 @@ namespace {
         };
 
         const auto full = [](const auto dt) {
-            fmt::print("\nTest completed in about {:.1f} s ({} ms).\n",
+            fmt::print("\nTest completed in about {:.1f} seconds ({} ms).\n",
                        dt / 1.0s, dt / 1ms);
         };
     }
