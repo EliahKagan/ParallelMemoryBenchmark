@@ -301,13 +301,13 @@ namespace {
         return extract_operating_parameters(parse_cmdline_args(argc, argv));
     }
 
-    void heading(const std::string_view label)
+    inline void heading(const std::string_view label)
     {
         fmt::print("{}... ", label);
         std::fflush(stdout);
     }
 
-    void done()
+    inline void done()
     {
         fmt::print("Done.\n");
     }
