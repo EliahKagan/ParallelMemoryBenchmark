@@ -214,7 +214,7 @@ namespace {
 
     [[nodiscard]]
     po::variables_map
-    parse_cmdline_args(const int argc, char* const* const argv)
+    parse_cmdline_args(const int argc, const char* const* const argv)
     {
         const auto& [desc, pos_desc] = describe_options();
 
@@ -295,7 +295,7 @@ namespace {
     }
     
     [[nodiscard]]
-    Parameters configure(const int argc, char* const* const argv)
+    Parameters configure(const int argc, const char* const* const argv)
     {
         // Set the program name for error messages to the Unix-style basename.
         assert(argc > 0);
