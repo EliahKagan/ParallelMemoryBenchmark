@@ -323,9 +323,9 @@ namespace {
     void bench(Reporter&& reporter, Action&& action)
     {
         const auto ti = std::chrono::steady_clock::now();
-        action();
+        std::forward<Action>(action)();
         const auto tf = std::chrono::steady_clock::now();
-        reporter(tf - ti);
+        std::forward<Reporter>(reporter)(tf - ti);
     }
 
     template<typename Reporter, typename Action>
