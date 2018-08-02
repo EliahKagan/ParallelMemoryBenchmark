@@ -353,12 +353,6 @@ namespace {
     // TODO: Extract the number-generating stanza (and accompanying static
     //       assertion) into its own function, and also implement a trivial
     //       alternative with std::iota to get more insight into adaptivity.
-    //
-    // TODO: Time each step in the test, as well as the whole thing. Put shared
-    //       timing and reporting logic in a function template called with
-    //       message arguments (std::string or boost::format) and action
-    //       arguments of template parameter type, passing lambdas. Or write an
-    //       RAII timing/reporting class (designed similar to std::lock_guard).
     void test(const Parameters& params, mt19937& gen)
     {
         static_assert(mt19937::min() == numeric_limits<unsigned>::min()
