@@ -350,6 +350,7 @@ namespace {
         using clock = std::chrono::steady_clock;
 
         const auto ti = clock::now();
+#pragma warning(suppress: 26496) // https://stackoverflow.com/a/48263092
         decltype(auto) ret = call(forward<Action>(action));
         const auto tf = clock::now();
 
