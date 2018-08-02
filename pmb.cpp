@@ -337,19 +337,6 @@ namespace {
         bench(std::forward<Reporter>(reporter), std::forward<Action>(action));
     }
 
-    // FIXME: remove when the new timing and reporting logic is in place
-    inline void heading(const std::string_view label)
-    {
-        fmt::print("{}... ", label);
-        std::fflush(stdout);
-    }
-
-    // FIXME: remove when the new timing and reporting logic is in place
-    inline void done()
-    {
-        fmt::print("Done.\n");
-    }
-
     // TODO: Extract the number-generating stanza (and accompanying static
     //       assertion) into its own function, and also implement a trivial
     //       alternative with std::iota to get more insight into adaptivity.
