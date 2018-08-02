@@ -179,7 +179,7 @@ namespace {
 
         const auto bytes = length * sizeof(unsigned);
 
-        return fmt::format_to(out, "{}{} word{} ({}{} MiB)\n",
+        return fmt::format_to(out, "{}{} element{} ({}{} MiB)\n",
                               "length"_pl, length, (length == 1u ? "" : "s"),
                               (bytes % mega == 0u ? "" : "~"), bytes / mega);
     }
