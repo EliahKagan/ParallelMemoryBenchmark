@@ -119,7 +119,6 @@ namespace {
         bool show_start_time;
     };
 
-
     // Helper for fmt::formatter<Parameters>::format. Prints timestamp.
     template<typename OutputIt>
     OutputIt format_localnow_to(const OutputIt out)
