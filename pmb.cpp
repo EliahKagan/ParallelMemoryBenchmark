@@ -323,25 +323,26 @@ namespace {
     // results to be reported if the task throws an excepetion, which is why I
     // took this approach rather a RAII class whose destructor reports.)
     template<typename Reporter, typename Action>
-    void bench(Reporter&& reporter, Action&& action)
+    auto bench(Reporter&& reporter, Action&& action)
     {
         using clock = std::chrono::steady_clock;
 
         const auto ti = clock::now();
-        std::forward<Action>(action)();
+        const auto ret = std::forward<Action>(action)();
         const auto tf = clock::now();
 
         std::forward<Reporter>(reporter)(tf - ti);
+        return ret;
     }
 
     // Prints an action's name, times it, and passes its duration to a reporter.
     template<typename Reporter, typename Action>
-    void bench(const std::string_view label,
+    auto bench(const std::string_view label,
                Reporter&& reporter, Action&& action)
     {
         fmt::print("{}... ", label);
         std::fflush(stdout);
-        bench(std::forward<Reporter>(reporter), std::forward<Action>(action));
+        return bench(std::forward<Reporter>(reporter), std::forward<Action>(action));
     }
 
     // TODO: Extract the number-generating stanza (and accompanying static
