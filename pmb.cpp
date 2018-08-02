@@ -325,23 +325,21 @@ namespace {
     template<typename Action>
     decltype(auto) call(Action&& action)
     {
-        using std::is_same_v;
-        using std::monostate;
         using Ret = decltype(forward<Action>(action)());
 
-        static_assert(!is_same_v<Ret, monostate>,
+        static_assert(!std::is_same_v<Ret, std::monostate>,
                       "monostate as a real result would be ambiguous");
 
-        if constexpr (is_same_v<Ret, void>) {
+        if constexpr (std::is_same_v<Ret, void>) {
             forward<Action>(action)();
-            return monostate{};
+            return std::monostate {};
         }
         else return forward<Action>(action)();
     }
 
     // Times an action and passes its duration to a reporter. (I don't *want*
     // results to be reported if the task throws an excepetion, which is why I
-    // took this approach rather a RAII class whose destructor reports.)
+    // used this approach rather than an RAII class whose destructor reports.)
     template<typename Reporter, typename Action>
     auto bench(Reporter&& reporter, Action&& action)
     {
@@ -384,7 +382,6 @@ namespace {
             std::generate(begin(a), end(a), gen);
         });
 
-        //unsigned s1 {}; // TODO: overload bench() to pass on the action's retval
         const auto s1 = bench("Hashing", report::time_only, [&]() {
             auto s = std::accumulate(cbegin(a), cend(a), 0u);
             fmt::print("{:x}.", s);
