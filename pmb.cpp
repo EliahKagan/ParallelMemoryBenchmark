@@ -302,6 +302,7 @@ namespace {
         return extract_operating_parameters(parse_cmdline_args(argc, argv));
     }
 
+    // Reporters for the bench() function templates.
     namespace report {
         const auto time_only = [](const auto dt) {
             fmt::print("  ({} ms)\n", dt / 1ms);
@@ -316,6 +317,15 @@ namespace {
             fmt::print("\nTest completed in about {:.1f} s ({} ms).\n",
                        dt / 1.0s, dt / 1ms);
         };
+    }
+
+    template<typename Action, typename Reporter>
+    void bench(Action&& action, Reporter&& reporter)
+    {
+        const auto ti = std::chrono::steady_clock::now();
+        action()
+        const auto tf = std::chrono::steady_clock::now();
+        reporter(tf - ti);
     }
 
     // FIXME: remove when the new timing and reporting logic is in place
