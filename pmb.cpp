@@ -67,7 +67,7 @@ namespace {
     };
 }
 
-// http://fmtlib.net/dev/api.html#formatting-user-defined-types for ParallelMode
+// ParallelMode http://fmtlib.net/dev/api.html#formatting-user-defined-types
 namespace fmt {
     template<>
     struct formatter<ParallelMode> {
@@ -110,25 +110,30 @@ namespace {
     }
 
     // Formattable names of specific configuration parameters (see Parameters).
-    struct ParamLabel {
+    struct ParameterLabel {
         static constexpr auto width = 9;
 
         std::string_view name;
     };
+
+    inline ParameterLabel operator""_pl(const char* const s, const size_t count)
+    {
+        return {{s, count}};
+    }
 }
 
-// http://fmtlib.net/dev/api.html#formatting-user-defined-types for ParamLabel
+// ParameterLabel http://fmtlib.net/dev/api.html#formatting-user-defined-types
 namespace fmt {
     template<>
-    struct formatter<ParamLabel> {
+    struct formatter<ParameterLabel> {
         template<typename ParseContext>
         constexpr auto parse(ParseContext& ctx) { return std::begin(ctx); }
 
         template<typename FormatContext>
-        auto format(const ParamLabel label, FormatContext& ctx)
+        auto format(const ParameterLabel label, FormatContext& ctx)
         {
             return format_to(std::begin(ctx), "{:>{}}:  ",
-                             label.name, ParamLabel::width);
+                             label.name, ParameterLabel::width);
         }
     };
 }
@@ -175,12 +180,12 @@ namespace {
         const auto bytes = length * sizeof(unsigned);
 
         return fmt::format_to(out, "{}{} word{} ({}{} MiB)\n",
-                ParamLabel{"length"}, length, (length == 1u ? "" : "s"),
-                (bytes % mega == 0u ? "" : "~"), bytes / mega);
+                              "length"_pl, length, (length == 1u ? "" : "s"),
+                              (bytes % mega == 0u ? "" : "~"), bytes / mega);
     }
 }
 
-// http://fmtlib.net/dev/api.html#formatting-user-defined-types for Parameters
+// Parameters http://fmtlib.net/dev/api.html#formatting-user-defined-types
 namespace fmt {
     template<>
     struct formatter<Parameters> {
@@ -199,11 +204,11 @@ namespace fmt {
             out = format_length_to(out, params.length);
 
             // Show the seed the PRNG will use, and say where it came from.
-            out = format_to(out, "{}{}  ({})\n", ParamLabel{"seed"},
+            out = format_to(out, "{}{}  ({})\n", "seed"_pl,
                             params.seed, params.seed_origin);
 
             // Name and "explain" the execution policy and if we rerun the sort.
-            out = format_to(out, "{}{}", ParamLabel{"sort mode"}, params.mode);
+            out = format_to(out, "{}{}", "sort mode"_pl, params.mode);
             if (params.inplace_reps > 1) 
                 out = format_to(out, "  [repeating {}x]", params.inplace_reps);
             return format_to(out, "\n");
