@@ -375,6 +375,7 @@ int main(int argc, char** argv)
 
     // TODO: instead of duration_cast, just divide by unit values (1s and 1ms).
     // TODO: for the seconds: round, don't truncate!
+    // TODO: consider printing seconds with tenths precision
     fmt::print("\nTest completed in about {} s ({} ms).\n",
                duration_cast<seconds>(dt).count(),
                duration_cast<milliseconds>(dt).count());
