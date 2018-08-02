@@ -109,6 +109,33 @@ namespace {
         NOT_REACHED();
     }
 
+    // Formattable names of specific configuration parameters (see Parameters).
+    struct ParamLabel {
+        static constexpr auto width = 9;
+
+        std::string_view name;
+    };
+}
+
+// http://fmtlib.net/dev/api.html#formatting-user-defined-types for ParamLabel
+namespace fmt {
+    template<>
+    struct formatter<ParamLabel> {
+        template<typename ParseContext>
+        constexpr auto parse(ParseContext& ctx) { return std::begin(ctx); }
+
+        template<typename FormatContext>
+        auto format(const ParamLabel label, FormatContext& ctx)
+        {
+            //return std::begin(ctx);
+            return format_to(std::begin(ctx), "{>:{}}:  ",
+                             label.name, ParamLabel::width);
+        }
+    };
+}
+
+namespace {
+    // Configuration parameters that control a run.
     struct Parameters {
         static constexpr auto label_width = 9;
 
@@ -148,10 +175,9 @@ namespace {
 
         const auto bytes = length * sizeof(unsigned);
 
-        return fmt::format_to(out, "{:>{}}:  {} word{} ({}{} MiB)\n",
-                              "length", Parameters::label_width,
-                              length, (length == 1u ? "" : "s"),
-                              (bytes % mega == 0u ? "" : "~"), bytes / mega);
+        return fmt::format_to(out, "{}{} word{} ({}{} MiB)\n",
+                ParamLabel{"length"}, length, (length == 1u ? "" : "s"),
+                (bytes % mega == 0u ? "" : "~"), bytes / mega);
     }
 }
 
@@ -174,13 +200,11 @@ namespace fmt {
             out = format_length_to(out, params.length);
 
             // Show the seed the PRNG will use, and say where it came from.
-            out = format_to(out, "{:>{}}:  {}  ({})\n",
-                            "seed", Parameters::label_width,
+            out = format_to(out, "{}{}  ({})\n", ParamLabel{"seed"},
                             params.seed, params.seed_origin);
 
             // Name and "explain" the execution policy and if we rerun the sort.
-            out = format_to(out, "{:>{}}:  {}", "sort mode",
-                            Parameters::label_width, params.mode);
+            out = format_to(out, "{}{}", ParamLabel{"sort mode"}, params.mode);
             if (params.inplace_reps > 1) 
                 out = format_to(out, "  [repeating {}x]", params.inplace_reps);
             return format_to(out, "\n");
