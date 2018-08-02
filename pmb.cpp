@@ -319,8 +319,8 @@ namespace {
         };
     }
 
-    template<typename Action, typename Reporter>
-    void bench(Action&& action, Reporter&& reporter)
+    template<typename Reporter, typename Action>
+    void bench(Reporter&& reporter, Action&& action)
     {
         const auto ti = std::chrono::steady_clock::now();
         action()
@@ -389,6 +389,8 @@ int main(int argc, char** argv)
     mt19937 gen {params.seed};
 
     const auto ti = std::chrono::steady_clock::now();
+
+
 
     try {
         test(params, gen);
