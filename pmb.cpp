@@ -346,29 +346,37 @@ namespace {
                         && mt19937::max() == numeric_limits<unsigned>::max(),
                 "the PRNG does not have the same range as the output type");
 
-        heading("Generating");
-        std::vector<unsigned> a (params.length);
-        const auto first = std::begin(a), last = std::end(a);
-        std::generate(first, last, gen);
-        done();
+        std::vector<unsigned> a;
 
-        heading("Hashing");
-        const auto s1 = std::accumulate(first, last, 0u);
-        fmt::print("{:x}.\n", s1);
+        bench("Allocating/zeroing", report::compact, [&]() {
+            a.resize(params.length);
+        });
+
+        bench("Generating", report::compact, [&]() {
+            std::generate(begin(a), end(a), gen);
+        });
+
+        unsigned s1 {}; // TODO: overload bench() to pass on the action's retval
+        bench("Hashing", report::time_only, [&]() {
+            s1 = std::accumulate(cbegin(a), cend(a), 0u);
+            fmt::print("{:x}.", s1);
+        });
 
         for (auto i = params.inplace_reps; i > 0; --i) {
-            heading("Sorting");
-            sort(params.mode, first, last);
-            done();
+            bench("Sorting", report::compact, [&]() {
+                sort(params.mode, begin(a), end(a));
+            });
         }
 
-        heading("Rehashing");
-        const auto s2 = std::accumulate(first, last, 0u);
-        fmt::print("{:x}, {}\n", s2, (s1 == s2 ? "same." : "DIFFERENT!"));
+        bench("Rehashing", report::time_only, [&]() {
+            const auto s2 = std::accumulate(cbegin(a), cend(a), 0u);
+            fmt::print("{:x}, {}", s2, (s1 == s2 ? "same." : "DIFFERENT!"));
+        });
 
-        heading("Checking");
-        fmt::print("{}\n",
-                   (std::is_sorted(first, last) ? "sorted." : "NOT SORTED!"));
+        bench("Checking", report::time_only, [&]() {
+            const auto ok = std::is_sorted(cbegin(a), cend(a));
+            fmt::print("{}", (ok ? "sorted." : "NOT SORTED!"));
+        });
     }
 }
 
