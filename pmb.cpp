@@ -39,7 +39,7 @@
 #endif
 
 namespace {
-    using namespace std::string_view_literals;
+    using namespace std::literals;
     namespace po = boost::program_options;
     using std::mt19937;
     using std::numeric_limits;
@@ -359,8 +359,7 @@ int main(int argc, char** argv)
     fmt::print("{}\n", params); // this extra newline is intended
     mt19937 gen {params.seed};
 
-    using namespace std::chrono;
-    const auto ti = steady_clock::now();
+    const auto ti = std::chrono::steady_clock::now();
 
     try {
         test(params, gen);
@@ -370,13 +369,10 @@ int main(int argc, char** argv)
         die("not enough memory");
     }
 
-    const auto tf = steady_clock::now();
+    const auto tf = std::chrono::steady_clock::now();
     const auto dt = tf - ti;
 
-    // TODO: instead of duration_cast, just divide by unit values (1s and 1ms).
     // TODO: for the seconds: round, don't truncate!
     // TODO: consider printing seconds with tenths precision
-    fmt::print("\nTest completed in about {} s ({} ms).\n",
-               duration_cast<seconds>(dt).count(),
-               duration_cast<milliseconds>(dt).count());
+    fmt::print("\nTest completed in about {} s ({} ms).\n", dt / 1s, dt / 1ms);
 }
