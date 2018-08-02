@@ -388,21 +388,13 @@ int main(int argc, char** argv)
     fmt::print("{}\n", params); // this extra newline is intended
     mt19937 gen {params.seed};
 
-    const auto ti = std::chrono::steady_clock::now();
-
-
-
-    try {
-        test(params, gen);
-    }
-    catch (const std::bad_alloc&) {
-        fmt::print("\n"); // end the "Generating..." line
-        die("not enough memory");
-    }
-
-    const auto tf = std::chrono::steady_clock::now();
-    const auto dt = tf - ti;
-
-    fmt::print("\nTest completed in about {:.1f} s ({} ms).\n",
-               dt / 1.0s, dt / 1ms);
+    bench(report::full, [&]() {
+        try {
+            test(params, gen);
+        }
+        catch (const std::bad_alloc&) {
+            fmt::print("\n"); // end the "Generating..." line
+            die("not enough memory");
+        }
+    });
 }
