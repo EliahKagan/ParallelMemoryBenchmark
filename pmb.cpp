@@ -319,7 +319,7 @@ namespace {
         };
     }
 
-    // Times an action and passed its duration to a reporter. (I don't *want*
+    // Times an action and passes its duration to a reporter. (I don't *want*
     // results to be reported if the task throws an excepetion, which is why I
     // took this approach rather a RAII class whose destructor reports.)
     template<typename Reporter, typename Action>
@@ -333,6 +333,7 @@ namespace {
         std::forward<Reporter>(reporter)(tf - ti);
     }
 
+    // Prints an action's name, times it, and passes its duration to a reporter.
     template<typename Reporter, typename Action>
     void bench(const std::string_view label,
                Reporter&& reporter, Action&& action)
