@@ -116,7 +116,9 @@ namespace {
         std::string_view name;
     };
 
-    inline ParameterLabel operator""_pl(const char* const s, const size_t count)
+    [[nodiscard]]
+    constexpr ParameterLabel
+    operator""_pl(const char* const s, const size_t count)
     {
         return {{s, count}};
     }
@@ -153,6 +155,7 @@ namespace {
 
     // Helper for fmt::formatter<Parameters>::format. Prints timestamp.
     template<typename OutputIt>
+    [[nodiscard]]
     OutputIt format_localnow_to(const OutputIt out)
     {
         // Obtain the current time.
@@ -173,6 +176,7 @@ namespace {
 
     // Helper for fmt::formatter<Parameters>::format. Prints array length.
     template<typename OutputIt>
+    [[nodiscard]]
     OutputIt format_length_to(const OutputIt out, const size_t length)
     {
         static constexpr size_t kilo {1024u}, mega {kilo * kilo};
