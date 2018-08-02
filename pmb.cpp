@@ -305,7 +305,7 @@ namespace {
     // Reporters for the bench() function templates.
     namespace report {
         const auto time_only = [](const auto dt) {
-            fmt::print("  ({} ms)\n", dt / 1ms);
+            fmt::print(" ({} ms)\n", dt / 1ms);
         };
 
         const auto compact = [](const auto dt) {
