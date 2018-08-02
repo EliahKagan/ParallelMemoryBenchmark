@@ -372,7 +372,7 @@ int main(int argc, char** argv)
     const auto tf = std::chrono::steady_clock::now();
     const auto dt = tf - ti;
 
-    // TODO: for the seconds: round, don't truncate!
     // TODO: consider printing seconds with tenths precision
-    fmt::print("\nTest completed in about {} s ({} ms).\n", dt / 1s, dt / 1ms);
+    fmt::print("\nTest completed in about {:.0} s ({} ms).\n",
+               dt / 1.0s, dt / 1ms);
 }
