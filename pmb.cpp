@@ -29,6 +29,7 @@
 #include <fmt/format.h>
 #include <fmt/ostream.h> // to print boost::format_options::options_description
 #include <fmt/time.h>
+#include <gsl/gsl>
 
 // Use this to mark places a compiler might wrongly think are possible to reach.
 #if defined(_MSC_VER)
@@ -214,7 +215,8 @@ namespace {
 
     [[nodiscard]]
     po::variables_map
-    parse_cmdline_args(const int argc, const char* const* const argv)
+    parse_cmdline_args(const int argc,
+                       const gsl::not_null<const char* const*> argv)
     {
         const auto& [desc, pos_desc] = describe_options();
 
@@ -295,11 +297,12 @@ namespace {
     }
     
     [[nodiscard]]
-    Parameters configure(const int argc, const char* const* const argv)
+    Parameters
+    configure(const int argc, const gsl::not_null<const char* const*> argv)
     {
         // Set the program name for error messages to the Unix-style basename.
         assert(argc > 0);
-        program_name = std::filesystem::path{argv[0]}.filename().string();
+        program_name = std::filesystem::path{*argv}.filename().string();
 
         // Fetch operating parameters from command-line arguments and defaults.
         return extract_operating_parameters(parse_cmdline_args(argc, argv));
@@ -408,7 +411,7 @@ namespace {
 
 int main(int argc, char** argv)
 {
-    const auto params = configure(argc, argv);
+    const auto params = configure(argc, gsl::not_null{argv});
     fmt::print("{}\n", params); // the extra newline is intended
     std::mt19937 gen {params.seed};
 
