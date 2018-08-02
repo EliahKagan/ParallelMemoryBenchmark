@@ -212,7 +212,7 @@ namespace {
     po::variables_map
     parse_cmdline_args(const int argc, char* const* const argv)
     {
-        const auto [desc, pos_desc] = describe_options();
+        const auto& [desc, pos_desc] = describe_options();
 
         po::variables_map vm;
         try {
