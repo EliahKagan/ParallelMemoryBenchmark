@@ -11,7 +11,6 @@
 #include <array>
 #include <cassert>
 #include <chrono>
-#include <cstdint>
 #include <cstdio>
 #include <cstdlib>
 #include <execution>
@@ -46,7 +45,6 @@ namespace {
     using std::mt19937;
     using std::numeric_limits;
     using std::size_t;
-    using std::uintmax_t;
 
     std::string program_name;
 
