@@ -346,7 +346,7 @@ namespace {
 
         heading("Rehashing");
         const auto s2 = std::accumulate(first, last, 0u);
-        fmt::print("{:x}. ({})\n", s2, (s1 == s2 ? "same" : "DIFFERENT!"));
+        fmt::print("{:x}, {}\n", s2, (s1 == s2 ? "same." : "DIFFERENT!"));
 
         heading("Checking");
         fmt::print("{}\n",
