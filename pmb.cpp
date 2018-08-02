@@ -132,7 +132,7 @@ namespace fmt {
         template<typename FormatContext>
         auto format(const ParameterLabel label, FormatContext& ctx)
         {
-            return format_to(std::begin(ctx), "{:>{}}:  ",
+            return format_to(std::begin(ctx), "{:>{}}:  ", // right-justified
                              label.name, ParameterLabel::width);
         }
     };
