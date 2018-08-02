@@ -373,7 +373,6 @@ int main(int argc, char** argv)
     const auto tf = std::chrono::steady_clock::now();
     const auto dt = tf - ti;
 
-    // TODO: consider printing seconds with tenths precision
     fmt::print("\nTest completed in about {:.1f} s ({} ms).\n",
                dt / 1.0s, dt / 1ms);
 }
