@@ -42,9 +42,10 @@ namespace {
     using namespace std::literals;
     namespace po = boost::program_options;
     using std::forward;
-    using std::mt19937;
-    using std::numeric_limits;
     using std::size_t;
+
+    template<typename T, typename U>
+    constexpr auto same_range_v = T::min() == U::min() && T::max() == U::max();
 
     std::string program_name;
 
@@ -140,7 +141,7 @@ namespace {
 
     // Helper for fmt::formatter<Parameters>::format. Prints array length.
     template<typename OutputIt>
-    OutputIt format_length_to(const OutputIt out, const std::size_t length)
+    OutputIt format_length_to(const OutputIt out, const size_t length)
     {
         static constexpr size_t kilo {1024u}, mega {kilo * kilo};
 
@@ -241,7 +242,7 @@ namespace {
         if (!vm.count("length")) die("no length specified");
 
         const auto length = vm.at("length").as<size_t>();
-        if (length >= numeric_limits<size_t>::max() / sizeof(unsigned))
+        if (length >= std::numeric_limits<size_t>::max() / sizeof(unsigned))
             die("length is representable but too big to meaningfully try");
 
         return length;
@@ -366,11 +367,10 @@ namespace {
     // TODO: Extract the number-generating stanza (and accompanying static
     //       assertion) into its own function, and also implement a trivial
     //       alternative with std::iota to get more insight into adaptivity.
-    void test(const Parameters& params, mt19937& gen)
+    void test(const Parameters& params, std::mt19937& gen)
     {
-        static_assert(mt19937::min() == numeric_limits<unsigned>::min()
-                        && mt19937::max() == numeric_limits<unsigned>::max(),
-                "the PRNG does not have the same range as the output type");
+        static_assert(same_range_v<std::mt19937, std::numeric_limits<unsigned>>,
+                      "the PRNG and the output type have different ranges");
 
         std::vector<unsigned> a;
 
@@ -410,7 +410,7 @@ int main(int argc, char** argv)
 {
     const auto params = configure(argc, argv);
     fmt::print("{}\n", params); // the extra newline is intended
-    mt19937 gen {params.seed};
+    std::mt19937 gen {params.seed};
 
     try {
         bench(report::full, [&]() {
