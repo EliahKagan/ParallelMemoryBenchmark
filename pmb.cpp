@@ -373,7 +373,7 @@ int main(int argc, char** argv)
     const auto tf = steady_clock::now();
     const auto dt = tf - ti;
 
-    // TODO: instead of duration_cast, divide by units (1s and 1ms) instead.
+    // TODO: instead of duration_cast, just divide by unit values (1s and 1ms).
     fmt::print("\nTest completed in about {} s ({} ms).\n",
                duration_cast<seconds>(dt).count(),
                duration_cast<milliseconds>(dt).count());
