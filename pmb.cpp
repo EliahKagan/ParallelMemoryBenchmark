@@ -322,7 +322,7 @@ namespace {
         };
     }
 
-    // Calls a medadic function and returns its result or, if void, a monostate.
+    // Calls a medadic functor and returns its result or, if void, a monostate.
     template<typename Action>
     decltype(auto) call(Action&& action)
     {
