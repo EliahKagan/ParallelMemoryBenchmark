@@ -323,7 +323,7 @@ namespace {
     void bench(Reporter&& reporter, Action&& action)
     {
         const auto ti = std::chrono::steady_clock::now();
-        action()
+        action();
         const auto tf = std::chrono::steady_clock::now();
         reporter(tf - ti);
     }
