@@ -333,7 +333,7 @@ namespace {
 
         if constexpr (std::is_same_v<Ret, void>) {
             forward<Action>(action)();
-            return std::monostate {};
+            return std::monostate{};
         }
         else return forward<Action>(action)();
     }
@@ -342,12 +342,12 @@ namespace {
     // results to be reported if the task throws an excepetion, which is why I
     // used this approach rather than an RAII class whose destructor reports.)
     template<typename Reporter, typename Action>
-    auto bench(Reporter&& reporter, Action&& action)
+    decltype(auto) bench(Reporter&& reporter, Action&& action)
     {
         using clock = std::chrono::steady_clock;
 
         const auto ti = clock::now();
-        const auto ret = call(forward<Action>(action));
+        decltype(auto) ret = call(forward<Action>(action));
         const auto tf = clock::now();
 
         forward<Reporter>(reporter)(tf - ti);
@@ -356,8 +356,8 @@ namespace {
 
     // Prints an action's name, times it, and passes its duration to a reporter.
     template<typename Reporter, typename Action>
-    auto bench(const std::string_view label,
-               Reporter&& reporter, Action&& action)
+    decltype(auto) bench(const std::string_view label,
+                         Reporter&& reporter, Action&& action)
     {
         fmt::print("{}... ", label);
         std::fflush(stdout);
