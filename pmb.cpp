@@ -302,12 +302,30 @@ namespace {
         return extract_operating_parameters(parse_cmdline_args(argc, argv));
     }
 
+    namespace report {
+        const auto time_only = [](const auto dt) {
+            fmt::print("  ({} ms)\n", dt / 1ms);
+        };
+
+        const auto compact = [](const auto dt) {
+            fmt::print("Done.");
+            time_only(dt);
+        };
+
+        const auto full = [](const auto dt) {
+            fmt::print("\nTest completed in about {:.1f} s ({} ms).\n",
+                       dt / 1.0s, dt / 1ms);
+        };
+    }
+
+    // FIXME: remove when the new timing and reporting logic is in place
     inline void heading(const std::string_view label)
     {
         fmt::print("{}... ", label);
         std::fflush(stdout);
     }
 
+    // FIXME: remove when the new timing and reporting logic is in place
     inline void done()
     {
         fmt::print("Done.\n");
