@@ -76,8 +76,8 @@ namespace fmt {
         template<typename FormatContext>
         auto format(const ParallelMode mode, FormatContext& ctx)
         {
-            const auto s = parallel_mode_summaries[static_cast<size_t>(mode)];
-            return format_to(std::begin(ctx), "{}", s);
+            return format_to(std::begin(ctx), "{}",
+                    parallel_mode_summaries.at(static_cast<size_t>(mode)));
         }
     };
 }
