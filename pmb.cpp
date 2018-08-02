@@ -392,13 +392,13 @@ int main(int argc, char** argv)
     fmt::print("{}\n", params); // this extra newline is intended
     mt19937 gen {params.seed};
 
-    bench(report::full, [&]() {
-        try {
+    try {
+        bench(report::full, [&]() {
             test(params, gen);
-        }
-        catch (const std::bad_alloc&) {
-            fmt::print("\n"); // end the "Generating..." line
-            die("not enough memory");
-        }
-    });
+        });
+    }
+    catch (const std::bad_alloc&) {
+        fmt::print("\n"); // end the "Allocating/zeroing..." line
+        die("not enough memory");
+    }
 }
