@@ -328,11 +328,11 @@ namespace {
         using clock = std::chrono::steady_clock;
 
         const auto ti = clock::now();
-        const auto ret = std::forward<Action>(action)();
+        const auto ret = std::forward<Action>(action)(); // FIXME
         const auto tf = clock::now();
 
         std::forward<Reporter>(reporter)(tf - ti);
-        return ret;
+        return ret; // FIXME
     }
 
     // Prints an action's name, times it, and passes its duration to a reporter.
