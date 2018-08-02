@@ -199,7 +199,8 @@ namespace {
                 ("time,t", "display human-readable start time")
                 ("seq,S", "don't try to parallelize")
                 ("par,P", "try to parallelize (default)")
-                ("par-unseq,U", "try to parallelize, may migrate thread and vectorize");
+                ("par-unseq,U",
+                        "try to parallelize, may migrate thread and vectorize");
 
         po::positional_options_description pos_desc;
         pos_desc.add("length", 1);
