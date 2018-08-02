@@ -137,7 +137,7 @@ namespace {
         //                       fmt::localtime(ticks));
     }
 
-    // Helper for fmt::formatter<Parameters>::format. Prints elem count.
+    // Helper for fmt::formatter<Parameters>::format. Prints array length.
     template<typename OutputIt>
     OutputIt format_length_to(const OutputIt out, const std::size_t length)
     {
