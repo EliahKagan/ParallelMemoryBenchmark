@@ -24,6 +24,7 @@
 #include <string>
 #include <string_view>
 #include <tuple>
+#include <variant> // for std::monostate
 #include <boost/program_options.hpp>
 #include <fmt/format.h>
 #include <fmt/ostream.h> // to print boost::format_options::options_description
@@ -41,6 +42,7 @@
 namespace {
     using namespace std::literals;
     namespace po = boost::program_options;
+    using std::forward;
     using std::mt19937;
     using std::numeric_limits;
     using std::size_t;
@@ -319,6 +321,24 @@ namespace {
         };
     }
 
+    // Calls a medadic function and returns its result or, if void, a monostate.
+    template<typename Action>
+    decltype(auto) call(Action&& action)
+    {
+        using std::is_same_v;
+        using std::monostate;
+        using Ret = decltype(forward<Action>(action)());
+
+        static_assert(!is_same_v<Ret, monostate>,
+                      "monostate as a real result would be ambiguous");
+
+        if constexpr (is_same_v<Ret, void>) {
+            forward<Action>(action)();
+            return monostate{};
+        }
+        else return forward<Action>(action)();
+    }
+
     // Times an action and passes its duration to a reporter. (I don't *want*
     // results to be reported if the task throws an excepetion, which is why I
     // took this approach rather a RAII class whose destructor reports.)
@@ -328,11 +348,11 @@ namespace {
         using clock = std::chrono::steady_clock;
 
         const auto ti = clock::now();
-        const auto ret = std::forward<Action>(action)(); // FIXME
+        const auto ret = call(forward<Action>(action));
         const auto tf = clock::now();
 
-        std::forward<Reporter>(reporter)(tf - ti);
-        return ret; // FIXME
+        forward<Reporter>(reporter)(tf - ti);
+        return ret;
     }
 
     // Prints an action's name, times it, and passes its duration to a reporter.
@@ -342,7 +362,7 @@ namespace {
     {
         fmt::print("{}... ", label);
         std::fflush(stdout);
-        return bench(std::forward<Reporter>(reporter), std::forward<Action>(action));
+        return bench(forward<Reporter>(reporter), forward<Action>(action));
     }
 
     // TODO: Extract the number-generating stanza (and accompanying static
