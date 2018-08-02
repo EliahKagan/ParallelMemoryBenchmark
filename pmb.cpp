@@ -409,7 +409,7 @@ namespace {
 int main(int argc, char** argv)
 {
     const auto params = configure(argc, argv);
-    fmt::print("{}\n", params); // this extra newline is intended
+    fmt::print("{}\n", params); // the extra newline is intended
     mt19937 gen {params.seed};
 
     try {
