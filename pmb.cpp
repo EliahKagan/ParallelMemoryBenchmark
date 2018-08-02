@@ -384,10 +384,11 @@ namespace {
             std::generate(begin(a), end(a), gen);
         });
 
-        unsigned s1 {}; // TODO: overload bench() to pass on the action's retval
-        bench("Hashing", report::time_only, [&]() {
-            s1 = std::accumulate(cbegin(a), cend(a), 0u);
-            fmt::print("{:x}.", s1);
+        //unsigned s1 {}; // TODO: overload bench() to pass on the action's retval
+        const auto s1 = bench("Hashing", report::time_only, [&]() {
+            auto s = std::accumulate(cbegin(a), cend(a), 0u);
+            fmt::print("{:x}.", s);
+            return s;
         });
 
         for (auto i = params.inplace_reps; i > 0; --i) {
