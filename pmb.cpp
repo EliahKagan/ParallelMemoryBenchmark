@@ -7,6 +7,10 @@
 // is an outgrowth of a program meant to reproduce a vexing system stability
 // problem; it is not really well-suited to use as a general-purpose benchmark.
 
+#ifdef _MSC_VER
+#define _CRT_SECURE_NO_WARNINGS // for <fmt/time.h> (providing fmt::localtime)
+#endif
+
 #include <algorithm>
 #include <array>
 #include <cassert>
