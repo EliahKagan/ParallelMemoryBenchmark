@@ -415,6 +415,7 @@ namespace {
         });
 
         bench("Generating", report::compact, [&]() {
+            // FIXME: Don't pass engines by value! (Wrap gen with std::ref.)
             std::generate(begin(a), end(a), gen);
         });
 
