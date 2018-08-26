@@ -19,6 +19,7 @@
 #include <cstdlib>
 #include <execution>
 #include <filesystem>
+#include <functional>
 #include <iterator>
 #include <limits>
 #include <numeric>
@@ -419,8 +420,7 @@ namespace {
         });
 
         bench("Generating", report::compact, [&]() {
-            // FIXME: Don't pass engines by value! (Wrap gen with std::ref.)
-            std::generate(begin(a), end(a), gen);
+            std::generate(begin(a), end(a), std::ref(gen));
         });
 
         const auto s1 = bench("Hashing", report::time_only, [&]() {
