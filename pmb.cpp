@@ -378,9 +378,10 @@ namespace {
         else return forward<Action>(action)();
     }
 
-    // Times an action and passes its duration to a reporter. (I don't *want*
-    // results to be reported if the task throws an excepetion, which is why I
-    // used this approach rather than an RAII class whose destructor reports.)
+    // Times an action and passes its duration to a reporter. (Results shouldn't
+    // be reported if the task throws an exception, so I did it this way and not
+    // with an RAII class whose destructor reports. But I could've made and used
+    // such a class, if it only reported when std::uncaught_exceptions() == 0.)
     template<typename Reporter, typename Action>
     decltype(auto) bench(Reporter&& reporter, Action&& action)
     {
