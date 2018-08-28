@@ -50,6 +50,16 @@ namespace {
     using namespace std::execution;
     namespace po = boost::program_options;
 
+    // See "overloaded" in http://stroustrup.com/tour2.html, p. 176.
+    template<typename... Fs>
+    class MultiLambda : public Fs... {
+    public:
+        using Fs::operator()...;
+    };
+
+    template<typename... Fs>
+    MultiLambda(Fs...) -> MultiLambda<Fs...>;
+    
     template<typename T, typename U>
     constexpr auto same_range_v = T::min() == U::min() && T::max() == U::max();
 
@@ -65,23 +75,6 @@ namespace {
     using ParallelMode = std::variant<sequenced_policy,
                                       parallel_policy,
                                       parallel_unsequenced_policy>;
-
-    struct ParallelModeSummarizer {
-        constexpr auto operator()(sequenced_policy) const noexcept
-        {
-            return "std::execution::seq (do not parallelize)";
-        }
-        
-        constexpr auto operator()(parallel_policy) const noexcept
-        {
-            return "std::execution::par (parallelize)";
-        }
-
-        constexpr auto operator()(parallel_unsequenced_policy) const noexcept
-        {
-            return "std::execution::par_unseq (parallelize/vectorize/migrate)";
-        }
-    };
 }
 
 // ParallelMode http://fmtlib.net/dev/api.html#formatting-user-defined-types
@@ -94,8 +87,20 @@ namespace fmt {
         template<typename FormatContext>
         auto format(const ParallelMode& mode, FormatContext& ctx)
         {
-            return format_to(std::begin(ctx), "{}",
-                             visit(ParallelModeSummarizer{}, mode));
+            const MultiLambda summarize {
+                [](sequenced_policy) noexcept {
+                    return "std::execution::seq (do not parallelize)";
+                },
+                [](parallel_policy) noexcept {
+                    return "std::execution::par (parallelize)";
+                },
+                [](parallel_unsequenced_policy) noexcept {
+                    return "std::execution::par_unseq"
+                           " (parallelize/vectorize/migrate)";
+                }
+            };
+
+            return format_to(std::begin(ctx), "{}", visit(summarize, mode));
         }
     };
 }
