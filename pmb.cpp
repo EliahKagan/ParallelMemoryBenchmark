@@ -87,7 +87,7 @@ namespace fmt {
         template<typename FormatContext>
         auto format(const ParallelMode& mode, FormatContext& ctx)
         {
-            const MultiLambda summarize {
+            const auto summary = visit(MultiLambda{
                 [](sequenced_policy) noexcept {
                     return "std::execution::seq (do not parallelize)";
                 },
@@ -98,9 +98,9 @@ namespace fmt {
                     return "std::execution::par_unseq"
                            " (parallelize/vectorize/migrate)";
                 }
-            };
+            }, mode);
 
-            return format_to(std::begin(ctx), "{}", visit(summarize, mode));
+            return format_to(std::begin(ctx), "{}", summary);
         }
     };
 }
