@@ -46,12 +46,9 @@
 #endif
 
 namespace {
-    using namespace std::execution;
     using namespace std::chrono_literals;
+    using namespace std::execution;
     namespace po = boost::program_options;
-    using std::forward;
-    using std::size_t;
-    using std::string_view;
 
     template<typename T, typename U>
     constexpr auto same_range_v = T::min() == U::min() && T::max() == U::max();
@@ -59,7 +56,7 @@ namespace {
     std::string program_name;
 
     [[noreturn]]
-    void die(const string_view message)
+    void die(const std::string_view message)
     {
         fmt::print(stderr, "{}: error : {}\n", program_name, message);
         std::exit(EXIT_FAILURE);
@@ -70,17 +67,17 @@ namespace {
                                       parallel_unsequenced_policy>;
 
     struct ParallelModeSummarizer {
-        string_view operator()(sequenced_policy) const noexcept
+        constexpr auto operator()(sequenced_policy) const noexcept
         {
             return "std::execution::seq (do not parallelize)";
         }
         
-        string_view operator()(parallel_policy) const noexcept
+        constexpr auto operator()(parallel_policy) const noexcept
         {
             return "std::execution::par (parallelize)";
         }
 
-        string_view operator()(parallel_unsequenced_policy) const noexcept
+        constexpr auto operator()(parallel_unsequenced_policy) const noexcept
         {
             return "std::execution::par_unseq (parallelize/vectorize/migrate)";
         }
@@ -108,12 +105,12 @@ namespace {
     struct ParameterLabel {
         static constexpr auto width = 9;
 
-        string_view name;
+        std::string_view name;
     };
 
     [[nodiscard]]
     constexpr ParameterLabel
-    operator""_pl(const char* const s, const size_t count)
+    operator""_pl(const char* const s, const std::size_t count)
     {
         return {{s, count}};
     }
@@ -140,9 +137,9 @@ namespace {
     struct Parameters {
         static constexpr auto label_width = 9;
 
-        size_t length;
+        std::size_t length;
         unsigned seed;
-        string_view seed_origin;
+        std::string_view seed_origin;
         ParallelMode mode;
         int inplace_reps;
         bool show_start_time;
@@ -172,9 +169,9 @@ namespace {
     // Helper for fmt::formatter<Parameters>::format. Prints array length.
     template<typename OutputIt>
     [[nodiscard]]
-    OutputIt format_length_to(const OutputIt out, const size_t length)
+    OutputIt format_length_to(const OutputIt out, const std::size_t length)
     {
-        static constexpr size_t kilo {1024u}, mega {kilo * kilo};
+        static constexpr std::size_t kilo {1024u}, mega {kilo * kilo};
 
         const auto bytes = length * sizeof(unsigned);
 
@@ -223,7 +220,7 @@ namespace {
         po::options_description desc {"Options to configure the benchmark"};
         desc.add_options()
                 ("help,h", "show this message") // TODO: list --help separately
-                ("length,l", po::value<size_t>(),
+                ("length,l", po::value<std::size_t>(),
                              "specify how many elements to generate and sort")
                 ("seed,s", po::value<unsigned>(),
                            "custom seed for PRNG (omit to use system entropy)")
@@ -266,19 +263,20 @@ namespace {
     }
 
     [[nodiscard]]
-    size_t extract_length(const po::variables_map& vm)
+    std::size_t extract_length(const po::variables_map& vm)
     {
         if (!vm.count("length")) die("no length specified");
 
-        const auto length = vm.at("length").as<size_t>();
-        if (length >= std::numeric_limits<size_t>::max() / sizeof(unsigned))
+        const auto length = vm.at("length").as<std::size_t>();
+        if (length >= std::numeric_limits<std::size_t>::max()
+                        / sizeof(unsigned))
             die("length is representable but too big to meaningfully try");
 
         return length;
     }
 
     [[nodiscard]]
-    std::tuple<unsigned, string_view>
+    std::tuple<unsigned, std::string_view>
     obtain_seed_info(const po::variables_map& vm)
     {
         if (vm.count("seed"))
@@ -356,16 +354,16 @@ namespace {
     template<typename Action>
     decltype(auto) call(Action&& action)
     {
-        using Ret = decltype(forward<Action>(action)());
+        using Ret = decltype(std::forward<Action>(action)());
 
         static_assert(!std::is_same_v<Ret, std::monostate>,
                       "monostate as a real result would be ambiguous");
 
         if constexpr (std::is_same_v<Ret, void>) {
-            forward<Action>(action)();
+            std::forward<Action>(action)();
             return std::monostate{};
         }
-        else return forward<Action>(action)();
+        else return std::forward<Action>(action)();
     }
 
     // Times an action and passes its duration to a reporter. (Results shouldn't
@@ -379,21 +377,22 @@ namespace {
 
         const auto ti = clock::now();
 #pragma warning(suppress: 26496) // https://stackoverflow.com/a/48263092
-        decltype(auto) ret = call(forward<Action>(action));
+        decltype(auto) ret = call(std::forward<Action>(action));
         const auto tf = clock::now();
 
-        forward<Reporter>(reporter)(tf - ti);
+        std::forward<Reporter>(reporter)(tf - ti);
         return ret;
     }
 
     // Prints an action's name, times it, and passes its duration to a reporter.
     template<typename Reporter, typename Action>
-    decltype(auto) bench(const string_view label,
+    decltype(auto) bench(const std::string_view label,
                          Reporter&& reporter, Action&& action)
     {
         fmt::print("{}... ", label);
         std::fflush(stdout);
-        return bench(forward<Reporter>(reporter), forward<Action>(action));
+        return bench(std::forward<Reporter>(reporter),
+                     std::forward<Action>(action));
     }
 
     // TODO: Extract the number-generating stanza (and accompanying static
