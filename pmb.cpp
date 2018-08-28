@@ -29,7 +29,7 @@
 #include <string_view>
 #include <tuple>
 #include <utility>
-#include <variant> // for std::monostate
+#include <variant>
 #include <boost/program_options.hpp>
 #include <fmt/format.h>
 #include <fmt/ostream.h> // to print boost::format_options::options_description
@@ -46,10 +46,12 @@
 #endif
 
 namespace {
-    using namespace std::literals;
+    using namespace std::execution;
+    using namespace std::chrono_literals;
     namespace po = boost::program_options;
     using std::forward;
     using std::size_t;
+    using std::string_view;
 
     template<typename T, typename U>
     constexpr auto same_range_v = T::min() == U::min() && T::max() == U::max();
@@ -57,18 +59,31 @@ namespace {
     std::string program_name;
 
     [[noreturn]]
-    void die(const std::string_view message)
+    void die(const string_view message)
     {
         fmt::print(stderr, "{}: error : {}\n", program_name, message);
         std::exit(EXIT_FAILURE);
     }
 
-    enum class ParallelMode { seq, par, par_unseq };
+    using ParallelMode = std::variant<sequenced_policy,
+                                      parallel_policy,
+                                      parallel_unsequenced_policy>;
 
-    constexpr std::array parallel_mode_summaries {
-        "std::execution::seq (do not parallelize)"sv,
-        "std::execution::par (parallelize)"sv,
-        "std::execution::par_unseq (parallelize/vectorize/migrate)"sv
+    struct ParallelModeSummarizer {
+        string_view operator()(sequenced_policy) const noexcept
+        {
+            return "std::execution::seq (do not parallelize)";
+        }
+        
+        string_view operator()(parallel_policy) const noexcept
+        {
+            return "std::execution::par (parallelize)";
+        }
+
+        string_view operator()(parallel_unsequenced_policy) const noexcept
+        {
+            return "std::execution::par_unseq (parallelize/vectorize/migrate)";
+        }
     };
 }
 
@@ -80,45 +95,20 @@ namespace fmt {
         constexpr auto parse(ParseContext& ctx) { return std::begin(ctx); }
 
         template<typename FormatContext>
-        auto format(const ParallelMode mode, FormatContext& ctx)
+        auto format(const ParallelMode& mode, FormatContext& ctx)
         {
             return format_to(std::begin(ctx), "{}",
-                    parallel_mode_summaries.at(static_cast<size_t>(mode)));
+                             visit(ParallelModeSummarizer{}, mode));
         }
     };
 }
 
 namespace {
-    // TODO: Consider making a template that itself binds a function template as
-    //       a template parameter, for run-time selection of execution policy
-    //       for any algorithm that supports them. The algorithm would still be
-    //       selected at compile-time, but the execution policy at run-time.
-    template<typename RandomIt>
-    void
-    sort(const ParallelMode mode, const RandomIt first, const RandomIt last)
-    {
-        switch (mode) {
-        case ParallelMode::seq:
-            std::sort(std::execution::seq, first, last);
-            return;
-
-        case ParallelMode::par:
-            std::sort(std::execution::par, first, last);
-            return;
-
-        case ParallelMode::par_unseq:
-            std::sort(std::execution::par_unseq, first, last);
-            return;
-        }
-
-        NOT_REACHED();
-    }
-
     // Formattable names of specific configuration parameters (see Parameters).
     struct ParameterLabel {
         static constexpr auto width = 9;
 
-        std::string_view name;
+        string_view name;
     };
 
     [[nodiscard]]
@@ -152,7 +142,7 @@ namespace {
 
         size_t length;
         unsigned seed;
-        std::string_view seed_origin;
+        string_view seed_origin;
         ParallelMode mode;
         int inplace_reps;
         bool show_start_time;
@@ -288,7 +278,7 @@ namespace {
     }
 
     [[nodiscard]]
-    std::tuple<unsigned, std::string_view>
+    std::tuple<unsigned, string_view>
     obtain_seed_info(const po::variables_map& vm)
     {
         if (vm.count("seed"))
@@ -306,12 +296,12 @@ namespace {
 
         switch (got_seq + got_par + got_par_unseq) {
         case 0u:
-            return ParallelMode::par;
+            return par;
 
         case 1u:
-            if (got_seq) return ParallelMode::seq;
-            if (got_par) return ParallelMode::par;
-            if (got_par_unseq) return ParallelMode::par_unseq;
+            if (got_seq) return seq;
+            if (got_par) return par;
+            if (got_par_unseq) return par_unseq;
             NOT_REACHED();
 
         default:
@@ -398,7 +388,7 @@ namespace {
 
     // Prints an action's name, times it, and passes its duration to a reporter.
     template<typename Reporter, typename Action>
-    decltype(auto) bench(const std::string_view label,
+    decltype(auto) bench(const string_view label,
                          Reporter&& reporter, Action&& action)
     {
         fmt::print("{}... ", label);
@@ -432,7 +422,8 @@ namespace {
 
         for (auto i = params.inplace_reps; i > 0; --i) {
             bench("Sorting", report::compact, [&]() {
-                sort(params.mode, begin(a), end(a));
+                visit([&](auto policy) { std::sort(policy, begin(a), end(a)); },
+                      params.mode);
             });
         }
 
