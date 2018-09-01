@@ -361,7 +361,7 @@ namespace {
     {
         using Ret = decltype(std::forward<Action>(action)());
 
-        static_assert(!std::is_same_v<Ret, std::monostate>,
+        static_assert(!std::is_same_v<std::decay_t<Ret>, std::monostate>,
                       "monostate as a real result would be ambiguous");
 
         if constexpr (std::is_same_v<Ret, void>) {
