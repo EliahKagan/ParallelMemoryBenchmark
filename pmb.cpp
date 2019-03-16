@@ -410,33 +410,33 @@ namespace {
 
         std::vector<unsigned> a;
 
-        bench("Allocating/zeroing", report::compact, [&]() {
+        bench("Allocating/zeroing", report::compact, [&] {
             a.resize(params.length);
         });
 
-        bench("Generating", report::compact, [&]() {
+        bench("Generating", report::compact, [&] {
             std::generate(begin(a), end(a), std::ref(gen));
         });
 
-        const auto s1 = bench("Hashing", report::time_only, [&]() {
+        const auto s1 = bench("Hashing", report::time_only, [&] {
             auto s = std::accumulate(cbegin(a), cend(a), 0u);
             fmt::print("{:x}.", s);
             return s;
         });
 
         for (auto i = params.inplace_reps; i > 0; --i) {
-            bench("Sorting", report::compact, [&]() {
+            bench("Sorting", report::compact, [&] {
                 visit([&](auto policy) { std::sort(policy, begin(a), end(a)); },
                       params.mode);
             });
         }
 
-        bench("Rehashing", report::time_only, [&]() {
+        bench("Rehashing", report::time_only, [&] {
             const auto s2 = std::accumulate(cbegin(a), cend(a), 0u);
             fmt::print("{:x}, {}", s2, (s1 == s2 ? "same." : "DIFFERENT!"));
         });
 
-        bench("Checking", report::time_only, [&]() {
+        bench("Checking", report::time_only, [&] {
             const auto ok = std::is_sorted(cbegin(a), cend(a));
             fmt::print("{}", (ok ? "sorted." : "NOT SORTED!"));
         });
@@ -450,7 +450,7 @@ int main(int argc, char** argv)
     std::mt19937 gen {params.seed};
 
     try {
-        bench(report::full, [&]() {
+        bench(report::full, [&] {
             test(params, gen);
         });
     }
