@@ -39,8 +39,15 @@ else()
     add_compile_options(-Wall -Wextra)
 endif()
 
-find_package (Boost REQUIRED COMPONENTS program_options)
-include_directories (${Boost_INCLUDE_DIRS})
+find_package(Boost REQUIRED COMPONENTS program_options)
+find_package(fmt CONFIG REQUIRED)
+find_package(Microsoft.GSL CONFIG REQUIRED)
+include_directories(${Boost_INCLUDE_DIRS})
 
-# Add source to this project's executable.
-add_executable (ParallelMemoryBenchmark0 "pmb.cpp")
+add_executable(pmb "pmb.cpp")
+
+target_link_libraries(pmb PRIVATE
+    Boost::program_options
+    fmt::fmt
+    Microsoft.GSL::GSL
+)
