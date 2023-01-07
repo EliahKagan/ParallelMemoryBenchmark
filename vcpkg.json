@@ -1,17 +1,17 @@
 {
-    "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
-    "name": "parallel-memory-benchmark",
-    "version": "1.0",
-    "dependencies": [
-        "boost-program-options",
-        "fmt",
-        "ms-gsl"
-    ],
-    "builtin-baseline": "203f5f3bef28ffccb667fdce97bcde7a88aba4e6",
-    "overrides": [
-        {
-            "name": "fmt",
-            "version": "5.3.0"
-        }
-    ]
+  "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
+  "name": "parallel-memory-benchmark",
+  "version": "1.0",
+  "dependencies": [
+    "boost-program-options",
+    "fmt",
+    "ms-gsl"
+  ],
+  "builtin-baseline": "12c2a93b4007612b5ffa980c9d2235eb0bcac10f",
+  "overrides": [
+    {
+      "name": "fmt",
+      "version": "5.3.0"
+    }
+  ]
 }
