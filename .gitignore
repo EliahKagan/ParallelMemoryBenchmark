@@ -4,5 +4,6 @@
 /x86/
 /x64/
 
-# Ignore local Visual Studio files
+# Ignore local editor/IDE configuration files
 /.vs/
+/.vscode/
