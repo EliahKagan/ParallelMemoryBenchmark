@@ -59,7 +59,7 @@ namespace {
 
     template<typename... Fs>
     MultiLambda(Fs...) -> MultiLambda<Fs...>;
-    
+
     template<typename T, typename U>
     constexpr auto same_range_v = T::min() == U::min() && T::max() == U::max();
 
@@ -68,7 +68,7 @@ namespace {
     [[noreturn]]
     void die(const std::string_view message)
     {
-        fmt::print(stderr, "{}: error : {}\n", program_name, message);
+        fmt::print(stderr, "{}: error: {}\n", program_name, message);
         std::exit(EXIT_FAILURE);
     }
 
@@ -210,7 +210,7 @@ namespace fmt {
 
             // Name and "explain" the execution policy and if we rerun the sort.
             out = format_to(out, "{}{}", "sort mode"_pl, params.mode);
-            if (params.inplace_reps > 1) 
+            if (params.inplace_reps > 1)
                 out = format_to(out, "  [repeating {}x]", params.inplace_reps);
             return format_to(out, "\n");
         }
@@ -325,7 +325,7 @@ namespace {
 
         return params;
     }
-    
+
     [[nodiscard]]
     Parameters
     configure(const int argc, const gsl::not_null<const char* const*> argv)
