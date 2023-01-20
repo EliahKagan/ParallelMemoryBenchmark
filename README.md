@@ -29,7 +29,8 @@ only slight interest otherwise, and completely irrelevant for comparison
 purposes.
 
 Library dependencies are resolved with
-[`vcpkg`](https://vcpkg.io/en/getting-started.html), supplied as a submodule.
+[`vcpkg`](https://vcpkg.io/en/getting-started.html), which is set up as a
+submodule.
 
 **See [`building.md`](building.md) for build instructions.**
 
