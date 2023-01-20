@@ -31,66 +31,12 @@ purposes.
 Library dependencies are resolved with
 [`vcpkg`](https://vcpkg.io/en/getting-started.html), supplied as a submodule.
 
-### Obtaining the software / cloning the submodule
-
-This clones the repository and the `vcpkg` submodule, and enters the directory:
-
-```sh
-git clone --recurse-submodules https://github.com/EliahKagan/ParallelMemoryBenchmark.git
-cd ParallelMemoryBenchmark
-```
-
-Or if you have already cloned the repository without the submodule:
-
-```sh
-cd ParallelMemoryBenchmark
-git submodule update --init
-```
-
-### On Unix-like systems
-
-On GNU/Linux and other \*nix systems, make sure `cmake` is installed. Then, in
-the `ParallelMemoryBenchmark` directory, run commands like:
-
-```sh
-mkdir build
-cd build
-cmake -DCMAKE_BUILD_TYPE=Release ..
-make
-```
-
-If you prefer `ninja` to `make`, then make sure `ninja` is installed (the
-package name is often `ninja-build`) and run these commands instead of the
-above:
-
-```sh
-mkdir build                                                                                         
-cd build                                                                                            
-cmake -DCMAKE_BUILD_TYPE=Release -G Ninja ..
-ninja
-```
-
-If you have trouble finding the created `pmb` executable in `build`, check the
-`Release` subdirectory.
-
-### On Windows
-
-***FIXME:** This section is wrong ever since we moved to submodules!*
-
-One option is to follow a similar procedure to the above, with `ninja`.
-
-But if you used `vcpkg integrate install` when setting up `vcpkg`, then both
-Visual Studio and Visual Studio Code should pick up the configuration. Make
-sure to select the "Release" build variant (which is *not* the default), unless
-you specifically want a debug build.
-
-If you have trouble finding the created `pmb.exe` executable in `build`, check
-the `Release` subdirectory.
+**See [`building.md`](building.md) for build instructions.**
 
 ## Usage
 
 The most basic usage is to run `pmb` specifying only the length of the
-array--that is, the number of integers to sort. For example, to sort a billion
+array—that is, the number of integers to sort. For example, to sort a billion
 integers:
 
 ```sh
