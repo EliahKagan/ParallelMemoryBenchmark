@@ -29,32 +29,44 @@ only slight interest otherwise, and completely irrelevant for comparison
 purposes.
 
 Library dependencies are resolved with
-[`vcpkg`](https://vcpkg.io/en/getting-started.html). In the future that may be
-added as a `git` submodule of this repository, but currently you must obtain
-it.
+[`vcpkg`](https://vcpkg.io/en/getting-started.html), supplied as a submodule.
+
+### Obtaining the software / cloning the submodule
+
+This clones the repository and the `vcpkg` submodule, and enters the directory:
+
+```sh
+git clone --recurse-submodules https://github.com/EliahKagan/ParallelMemoryBenchmark.git
+cd ParallelMemoryBenchmark
+```
+
+Or if you have already cloned the repository without the submodule:
+
+```sh
+cd ParallelMemoryBenchmark
+git submodule update --init
+```
 
 ### On Unix-like systems
 
-On GNU/Linux and other *nix systems, make sure `vcpkg` and `cmake` are
-installed. Then, in the `ParallelMemoryBenchmark` directory, run commands like:
+On GNU/Linux and other \*nix systems, make sure `cmake` is installed. Then, in
+the `ParallelMemoryBenchmark` directory, run commands like:
 
 ```sh
 mkdir build
 cd build
-cmake -DCMAKE_TOOLCHAIN_FILE=~/src/vcpkg/scripts/buildsystems/vcpkg.cmake -DCMAKE_BUILD_TYPE=Release ..
+cmake -DCMAKE_BUILD_TYPE=Release ..
 make
 ```
-
-But replace `~/src/vcpkg` with your `vcpkg` location, if different.
 
 If you prefer `ninja` to `make`, then make sure `ninja` is installed (the
 package name is often `ninja-build`) and run these commands instead of the
 above:
 
 ```sh
-mkdir build
-cd build
-cmake -DCMAKE_TOOLCHAIN_FILE=~/src/vcpkg/scripts/buildsystems/vcpkg.cmake -DCMAKE_BUILD_TYPE=Release -G Ninja ..
+mkdir build                                                                                         
+cd build                                                                                            
+cmake -DCMAKE_BUILD_TYPE=Release -G Ninja ..
 ninja
 ```
 
@@ -62,6 +74,8 @@ If you have trouble finding the created `pmb` executable in `build`, check the
 `Release` subdirectory.
 
 ### On Windows
+
+***FIXME:** This section is wrong ever since we moved to submodules!*
 
 One option is to follow a similar procedure to the above, with `ninja`.
 
