@@ -394,7 +394,9 @@ namespace {
         using clock = std::chrono::steady_clock;
 
         const auto ti = clock::now();
+#ifdef _MSC_VER
 #pragma warning(suppress: 26496) // https://stackoverflow.com/a/48263092
+#endif
         decltype(auto) ret = call(std::forward<Action>(action));
         const auto tf = clock::now();
 
