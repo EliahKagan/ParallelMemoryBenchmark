@@ -1,9 +1,11 @@
 # Ignore build files
+/cmake-build-*/
 /build/
 /out/
-/x86/
 /x64/
+/x86/
 
 # Ignore local editor/IDE configuration files
+/.idea/
 /.vs/
 /.vscode/
