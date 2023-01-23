@@ -74,7 +74,7 @@ The other currently available options are:
   -U [ --par-unseq ]    try to parallelize, may migrate thread and vectorize
 ```
 
-Of special importance are the flags `--seq`, `--par`, and `--par-unseq`, which
+Of special importance are the options `--seq`, `--par`, and `--par-unseq`, which
 specify the policy execution. By default, as shown above, it is as if `--par`
 were passed. These options correspond to
 [`execution_policy_tag_t`](https://en.cppreference.com/w/cpp/algorithm/execution_policy_tag_t)
