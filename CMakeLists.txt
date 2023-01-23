@@ -1,4 +1,4 @@
-﻿# Copyright (c) 2021, 2022 Eliah Kagan
+# Copyright (c) 2021, 2022 Eliah Kagan
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted.
@@ -15,7 +15,7 @@ cmake_minimum_required(VERSION 3.8)
 
 set(CMAKE_TOOLCHAIN_FILE ${CMAKE_CURRENT_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake)
 
-project ("ParallelMemoryBenchmark")
+project("ParallelMemoryBenchmark")
 
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_STANDARD 17)
