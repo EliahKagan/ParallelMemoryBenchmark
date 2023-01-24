@@ -79,3 +79,16 @@ specify the policy execution. By default, as shown above, it is as if `--par`
 were passed. These options correspond to
 [`execution_policy_tag_t`](https://en.cppreference.com/w/cpp/algorithm/execution_policy_tag_t)
 policies.
+
+## Authors
+
+ParallelMemoryBenchmark is written by
+[Eliah Kagan](https://github.com/EliahKagan) and
+[David Vassallo](https://github.com/dmvassallo).
+
+## Acknowledgements
+
+The `-2`/`--twice` feature is due to a suggestion by **Godfrey Vassallo**, who
+pointed out that it would be interesting to compare the performance of the
+original sorting operation with a second sorting operation, carried out
+immediately thereafter on the just-sorted elements.
