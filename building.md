@@ -27,6 +27,10 @@ cd ParallelMemoryBenchmark
 git submodule update --init
 ```
 
+As an alternative to cloning the repository, you can use the [dev
+container](https://docs.github.com/en/codespaces/setting-up-your-project-for-codespaces/adding-a-dev-container-configuration/introduction-to-dev-containers),
+which is set up to automatically clone the submodule the first time you run it.
+
 ## Way 1: On all systems: Use an IDE
 
 [Visual Studio Code](https://code.visualstudio.com/) with the [CMake
@@ -47,8 +51,8 @@ Some other IDEs may work just as well, but they have not been tested.
 
 ## Way 2A: On Unix-like systems
 
-Make sure `cmake` and a build toolchain are installed. For example, on Debian
-and Ubuntu, you could run:
+Unless you’re using the dev container, you should make sure `cmake` and a build
+toolchain are installed. For example, on Debian and Ubuntu, you could run:
 
 ```sh
 sudo apt install build-essential cmake
