@@ -1,6 +1,5 @@
 {
-  "image": "mcr.microsoft.com/devcontainers/cpp:0-debian-11",
+  "image": "mcr.microsoft.com/devcontainers/universal:2",
   "features": {
-  },
-  "postStartCommand": ["{ pwd; date; } | tee start.txt"]
+  }
 }
