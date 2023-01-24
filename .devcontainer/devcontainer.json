@@ -2,5 +2,6 @@
   "image": "mcr.microsoft.com/devcontainers/cpp:0-debian-11",
   "features": {
   },
-  "postStartCommand": "git submodule update --init"
+  "postCreateCommand": "git submodule update --init",
+  "waitFor": "postCreateCommand"
 }
