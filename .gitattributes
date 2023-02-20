@@ -1,0 +1,2 @@
+# Shell scripts need LF (Unix-style) line endings.
+/.devcontainer/onCreate text eol=lf
