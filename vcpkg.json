@@ -7,7 +7,7 @@
     "fmt",
     "ms-gsl"
   ],
-  "builtin-baseline": "e85cafa30def190eca0dc1413bf8c04e434af567",
+  "builtin-baseline": "83972272512ce4ede5fc3b2ba98f6468b179f192",
   "overrides": [
     {
       "name": "fmt",
